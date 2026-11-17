@@ -209,12 +209,12 @@
         text-align: center;
       }
     </style>
-    <link href="css/recorder-theme.css?v=1.8" rel="stylesheet" />
+    <link href="css/recorder-theme.css?v=1.9" rel="stylesheet" />
     <!-- Modulo per il caricamento di FFmpeg.WASM -->
     <script src="js/loadFFmpeg.js" type="module"></script>
     <script src="js/mediapipe-selfie.js?v=3.0"></script>
     <script src="js/webcam-pip.js?v=3.1"></script>
-    <script src="js/device-settings.js?v=1.0" defer></script>
+    <script src="js/device-settings.js?v=1.1" defer></script>
     <script src="js/recorder-appearance.js?v=1.1" defer></script>
     <script src="js/i18n.js?v=4.1"></script>
     <script src="js/barbatrucco.js?v=3.1"></script>
@@ -240,28 +240,10 @@
               <button type="button" id="ui-theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
                 <i class="fas fa-sun" aria-hidden="true"></i>
               </button>
-              <button type="button" id="ui-devices-toggle" aria-expanded="false" aria-controls="ui-devices-panel" data-i18n-title="device-settings-title" data-i18n-aria-label="device-settings-title" title="Device settings" aria-label="Device settings">
+              <button type="button" id="ui-devices-toggle" aria-haspopup="dialog" data-i18n-title="device-settings-title" data-i18n-aria-label="device-settings-title" title="Device settings" aria-label="Device settings">
                 <i class="fas fa-cog" aria-hidden="true"></i>
               </button>
             </div>
-          </div>
-          <div id="ui-devices-panel" class="bt-device-panel" hidden>
-            <div class="bt-device-panel-heading">
-              <strong data-i18n="device-settings-title">Device settings</strong>
-              <button type="button" class="bt-device-refresh" id="ui-devices-refresh" data-i18n-title="device-refresh" data-i18n-aria-label="device-refresh" title="Refresh devices" aria-label="Refresh devices">
-                <i class="fas fa-sync-alt" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="bt-device-fields">
-              <label for="ui-device-mic" data-i18n="device-microphone">Microphone</label>
-              <select id="ui-device-mic" class="custom-select custom-select-sm"></select>
-              <label for="ui-device-camera" data-i18n="device-webcam">Webcam</label>
-              <select id="ui-device-camera" class="custom-select custom-select-sm"></select>
-              <label for="ui-device-output" data-i18n="device-output">Playback output</label>
-              <select id="ui-device-output" class="custom-select custom-select-sm"></select>
-            </div>
-            <p class="bt-device-note mb-0" data-i18n="device-note">Device names may appear after granting permission. Output selection controls playback only.</p>
-            <div id="ui-device-status" role="status" aria-live="polite" class="bt-device-status"></div>
           </div>
           <div class="recorder-main-layout">
             <div class="recorder-screen-column">
