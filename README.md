@@ -4,6 +4,8 @@
 
 **All recording, audio mixing, video composition, segmentation inference, and media conversion run locally in your browser. Recorded audio and video are not uploaded to the Barbatrucco web server.** Some application libraries and the optional MediaPipe segmentation model are currently downloaded from third-party hosts; these requests download software assets, not recordings.
 
+You can test it (or use it from) here: [https://minirecorder.ditlab.it/](https://minirecorder.ditlab.it/) or [https://barbatrucco.ditlab.it/](https://barbatrucco.ditlab.it/)
+
 ## Features
 
 - Record tab audio, with optional video, using the browser's screen-sharing interface.
