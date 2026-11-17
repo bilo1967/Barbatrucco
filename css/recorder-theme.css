@@ -1268,3 +1268,67 @@ html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-s
     background-color: #edf2f7;
     color: #64778a;
 }
+
+/* Two compact input meters replace the large waveform; no extra page height. */
+.recorder-meter { display: flex; justify-content: center; margin-top: 7px; }
+.bt-level-meters {
+    width: min(100%, 285px); padding: 5px 9px;
+    border: 1px solid var(--ui-stroke); border-radius: 7px;
+    background: var(--ui-card-alt); color: var(--ui-text);
+    display: grid; gap: 5px;
+}
+.bt-level-row { display: flex; align-items: center; gap: 6px; font-size: 10px; height: 12px; }
+.bt-level-label { flex: 0 0 40px; text-align: left; }
+.bt-level-track {
+    flex: 1 1 auto; position: relative; height: 7px;
+    border-radius: 3px; background: #091321; overflow: hidden;
+}
+.bt-level-fill { width: 0; height: 100%; background: #3aa88a; border-radius: 3px; }
+.bt-level-fill[data-level="medium"] { background: #d9aa51; }
+.bt-level-fill[data-level="high"] { background: #d8615e; }
+.bt-level-peak { position: absolute; top: 0; bottom: 0; width: 2px; background: #f0e8da; left: 0; }
+.bt-level-value { width: 43px; text-align: right; font-size: 10px; font-variant-numeric: tabular-nums; }
+html[data-rec-theme="light"] .bt-level-track { background: #dce6ef; }
+html[data-rec-theme="light"] .bt-level-peak { background: #304b67; }
+
+/* Overlay duration on preview instead of reserving another row. */
+#rec-preview-stage { position: relative; }
+.rec-duration-overlay {
+    position: absolute; z-index: 8; top: 10px; left: 10px;
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px;
+    border-radius: 6px; background: rgba(0,0,0,.67); color: #fff;
+    font-size: 12px; font-variant-numeric: tabular-nums; line-height: 1.4;
+    pointer-events: none;
+}
+.rec-duration-overlay #timer { color: inherit !important; }
+
+/* Floating mixer popover anchored below the recording options. */
+.bt-mixer-area { position: relative; margin-top: 8px; flex: 0 0 auto; }
+.bt-mixer-button {
+    display: block; width: 100%; border: 1px solid var(--ui-stroke);
+    background: var(--ui-card-alt); color: var(--ui-text);
+    border-radius: 6px; padding: 4px 6px; font-size: 11px; cursor: pointer;
+}
+.bt-mixer-button:hover { border-color: var(--ui-accent); }
+.bt-mixer-panel {
+    position: absolute; z-index: 25; right: 0; top: calc(100% + 4px);
+    width: 194px; text-align: left; padding: 12px;
+    border: 1px solid var(--ui-stroke); border-radius: 8px;
+    background: var(--ui-card); color: var(--ui-text);
+    box-shadow: 0 10px 30px #0004;
+}
+.bt-mixer-panel[hidden] { display: none !important; }
+.bt-mixer-field { display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; margin-bottom: 8px; }
+.bt-mixer-field label, .bt-mixer-field output { font-size: 11px; margin: 0; }
+.bt-mixer-field output { font-variant-numeric: tabular-nums; }
+.bt-mixer-field input { grid-column: 1 / -1; width: 100%; accent-color: var(--ui-accent); height: 17px; }
+.bt-mixer-note { font-size: 10px; line-height: 1.35; opacity: .75; margin: 4px 0 8px; }
+.bt-mixer-reset {
+    display: block; margin-left: auto; padding: 3px 8px;
+    font-size: 11px; border: 1px solid var(--ui-stroke);
+    color: var(--ui-text); background: var(--ui-card-alt);
+    border-radius: 5px; cursor: pointer;
+}
+html[data-rec-theme="light"] .bt-mixer-panel { box-shadow: 0 10px 30px #152b4a33; }
+
+.bt-mixer-panel.bt-open-up { top: auto; bottom: calc(100% + 4px); }

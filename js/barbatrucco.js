@@ -58,6 +58,7 @@ var micRequest = null;
 var streamFinale = null;
 
 var audioFormat = 'mp3';
+var voiceoverActive = false;
 
 
 var originalMediaBlob = null;
@@ -106,6 +107,14 @@ function stopVisualization() {
     visualizerFrame = null;
     closeAudioContext(visualizerContext);
     visualizerContext = null;
+    for (const kind of ['source', 'mic']) {
+        const fill = document.getElementById('bt-meter-' + kind);
+        const peak = document.getElementById('bt-peak-' + kind);
+        const value = document.getElementById('bt-db-' + kind);
+        if (fill) fill.style.width = '0%';
+        if (peak) peak.style.left = '0%';
+        if (value) value.textContent = '–';
+    }
 }
 
 // Serializza tutte le operazioni sul filesystem virtuale di FFmpeg.
@@ -174,40 +183,68 @@ function handleScreenShareStream(stream) {
 }
 
 
-function visualizzaStream(stream, tela) {
+function visualizzaStream(stream) {
     stopVisualization();
-    const canvasCtx = tela.getContext('2d');
-    const w = tela.width, h = tela.height;
-    canvasCtx.clearRect(0, 0, w, h);
-    if (!stream || !stream.getAudioTracks().length) return;
-
-    const audioCtx = new AudioContext();
-    visualizerContext = audioCtx;
-    const sorgente = audioCtx.createMediaStreamSource(stream);
-    const analizzatore = audioCtx.createAnalyser();
-    analizzatore.fftSize = 512;
-    const dataArray = new Uint8Array(analizzatore.frequencyBinCount);
-    sorgente.connect(analizzatore); // Non si collega al dispositivo audio: solo analisi.
-
-    const draw = () => {
-        if (visualizerContext !== audioCtx) return;
-        analizzatore.getByteTimeDomainData(dataArray);
-        canvasCtx.fillStyle = 'rgb(0, 0, 16)';
-        canvasCtx.fillRect(0, 0, w, h);
-        canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = 'rgb(255, 255, 255)';
-        canvasCtx.beginPath();
-        const slice = w / dataArray.length;
-        for (let i = 0; i < dataArray.length; ++i) {
-            const y = dataArray[i] / 128 * h / 2;
-            if (i === 0) canvasCtx.moveTo(0, y);
-            else canvasCtx.lineTo(i * slice, y);
-        }
-        canvasCtx.lineTo(w, h / 2);
-        canvasCtx.stroke();
-        visualizerFrame = requestAnimationFrame(draw);
+    // During capture monitor source and microphone independently; during playback,
+    // monitor the recorded output. Analyzers do not feed audible audio to speakers.
+    const sources = {
+        source: streamCondivisione?.active ? streamCondivisione : stream,
+        mic: streamMicrofono?.active ? streamMicrofono : null
     };
-    draw();
+    if (!sources.source?.getAudioTracks().length && !sources.mic?.getAudioTracks().length) return;
+    const ctx = new AudioContext();
+    visualizerContext = ctx;
+    const analyzers = {};
+    const silent = ctx.createGain();
+    silent.gain.value = 0;
+    silent.connect(ctx.destination);
+    for (const kind of ['source', 'mic']) {
+        const input = sources[kind];
+        if (!input?.getAudioTracks().length) continue;
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        const node = ctx.createMediaStreamSource(input);
+        node.connect(analyser);
+        analyser.connect(silent);
+        analyzers[kind] = { analyser, data: new Float32Array(analyser.fftSize), peak: -60, hold: 0 };
+    }
+    const update = () => {
+        if (visualizerContext !== ctx) return;
+        const now = performance.now();
+        for (const kind of ['source', 'mic']) {
+            const meter = analyzers[kind];
+            const fill = document.getElementById('bt-meter-' + kind);
+            const peak = document.getElementById('bt-peak-' + kind);
+            const text = document.getElementById('bt-db-' + kind);
+            if (!meter) {
+                fill.style.width = '0%';
+                peak.style.left = '0%';
+                text.textContent = '–';
+                continue;
+            }
+            meter.analyser.getFloatTimeDomainData(meter.data);
+            let power = 0, amplitude = 0;
+            for (const sample of meter.data) {
+                power += sample * sample;
+                amplitude = Math.max(amplitude, Math.abs(sample));
+            }
+            const gain = window.BTVolumeMixer?.get(kind) ?? defaultGain;
+            const rms = Math.sqrt(power / meter.data.length) * gain;
+            const level = Math.max(-60, Math.min(0, 20 * Math.log10(Math.max(rms, 0.000001))));
+            const peakDb = Math.max(-60, Math.min(0, 20 * Math.log10(Math.max(amplitude * gain, 0.000001))));
+            if (peakDb >= meter.peak || now > meter.hold) {
+                meter.peak = peakDb;
+                meter.hold = now + 650;
+            }
+            fill.style.width = Math.max(0, (level + 60) / 60 * 100) + '%';
+            fill.dataset.level = level > -6 ? 'high' : (level > -18 ? 'medium' : 'low');
+            peak.style.left = Math.min(99.5, (meter.peak + 60) / 60 * 100) + '%';
+            text.textContent = level <= -59.5 ? '–' : Math.round(level) + ' dB';
+        }
+        visualizerFrame = requestAnimationFrame(update);
+    };
+    ctx.resume().catch(() => {});
+    update();
 }
 
 // Lazy initialization of FFmpeg.wasm; conversions run in the browser.
@@ -452,7 +489,7 @@ $(document).ready(async function() {
 
     mangiacassette = $('#mangiacassette').get(0); // un elemento di tipo video o audio
 
-    grafico = $('#grafico').get(0); // un elemento di tipo canvas
+    // The waveform canvas has been replaced by compact level meters.
 
     mangiacassette.onkeypress = (event) => {
         event.preventDefault();
@@ -463,9 +500,16 @@ $(document).ready(async function() {
     mangiacassette.onplaying = () => {
         const stream = mangiacassette.srcObject ||
             (typeof mangiacassette.captureStream === 'function' ? mangiacassette.captureStream() : null);
-        visualizzaStream(stream, grafico);
+        visualizzaStream(stream);
     };
 
+
+    BTVolumeMixer.init();
+    BTVolumeMixer.onChange = () => {
+        if (volumi.A?.gain) volumi.A.gain.value =
+            voiceoverActive ? Math.min(0.05, BTVolumeMixer.get('source')) : BTVolumeMixer.get('source');
+        if (volumi.B?.gain) volumi.B.gain.value = BTVolumeMixer.get('mic');
+    };
 
     timer = new MyChrono(100, function(t) {
         $('#timer').html( ((t/10) + "").toHHMMSS());
@@ -831,11 +875,12 @@ $(document).ready(async function() {
 
 
     const ripristinaVolume = () => {
+        voiceoverActive = false;
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
             console.log('volume b: '+ volumi.B.gain.value);
-            volumi.A.gain.value = defaultGain;
-            volumi.B.gain.value = defaultGain;
+            volumi.A.gain.value = BTVolumeMixer.get('source');
+            volumi.B.gain.value = BTVolumeMixer.get('mic');
         }
 
     };
@@ -843,12 +888,13 @@ $(document).ready(async function() {
 
     // Duck
     $('#voiceover').on('mousedown', function() {
+        voiceoverActive = true;
         $(this).removeClass('btn-warning').addClass('btn-danger');
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
             console.log('volume b: '+ volumi.B.gain.value);
-            volumi.A.gain.value = 0.05;
-            volumi.B.gain.value = 1.0;
+            volumi.A.gain.value = Math.min(0.05, BTVolumeMixer.get('source'));
+            volumi.B.gain.value = BTVolumeMixer.get('mic');
         }
     });
 
@@ -909,6 +955,7 @@ $(document).ready(async function() {
         closeAudioContext(mixingContext);
         mixingContext = null;
         volumi = {};
+        voiceoverActive = false;
         setRecordingControls(false);
         $('#record-video, #activate-mic, #activate-webcam').prop('disabled', false).removeClass('disabled');
         $('#activate-mic-label').prop('disabled', false);
@@ -1056,13 +1103,13 @@ function mergeAudioStreams(streamA, streamB, gainNodes = null, gain = defaultGai
     if (streamA && streamA.getAudioTracks().length > 0) {
         const sourceA = context.createMediaStreamSource(streamA);
         const gainNodeA = context.createGain();
-        gainNodeA.gain.value = gain;
+        gainNodeA.gain.value = BTVolumeMixer.get('source');
         sourceA.connect(gainNodeA).connect(destination);
         hasStreamA = true;
         if (!!gainNodes) gainNodes.A = gainNodeA;
     } else {
         const gainNodeA = context.createGain();
-        gainNodeA.gain.value = gain;
+        gainNodeA.gain.value = BTVolumeMixer.get('source');
         gainNodeA.connect(destination);
         hasStreamA = true;
         if (!!gainNodes) gainNodes.A = gainNodeA;
@@ -1071,13 +1118,13 @@ function mergeAudioStreams(streamA, streamB, gainNodes = null, gain = defaultGai
     if (streamB && streamB.getAudioTracks().length > 0) {
         const sourceB = context.createMediaStreamSource(streamB);
         const gainNodeB = context.createGain();
-        gainNodeB.gain.value = gain;
+        gainNodeB.gain.value = BTVolumeMixer.get('mic');
         sourceB.connect(gainNodeB).connect(destination);
         hasStreamB = true;
         if (!!gainNodes) gainNodes.B = gainNodeB;
     } else {
         const gainNodeB = context.createGain();
-        gainNodeB.gain.value = gain;
+        gainNodeB.gain.value = BTVolumeMixer.get('mic');
         gainNodeB.connect(destination);
         hasStreamB = true;
         if (!!gainNodes) gainNodes.B = gainNodeB;

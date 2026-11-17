@@ -14,6 +14,14 @@ const BTLanguages = {
     "Device names may appear after granting permission. Output selection controls playback only.",
     "I nomi dei dispositivi possono comparire dopo l'autorizzazione. L'uscita selezionata riguarda solo la riproduzione."
   ],
+  "audio-levels": ["Audio levels", "Livelli audio"],
+  "meter-source": ["Source", "Sorgente"],
+  "meter-mic": ["Mic", "Mic"],
+  "mixer-title": ["Audio mixer", "Mixer audio"],
+  "mixer-source": ["Source", "Sorgente"],
+  "mixer-mic": ["Microphone", "Microfono"],
+  "mixer-note": ["The separate microphone track remains unprocessed.", "La traccia microfono separata rimane originale."],
+  "mixer-reset": ["Reset", "Ripristina"],
   "record-video-label": [
     "Record video",
     "Registra video"
