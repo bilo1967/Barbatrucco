@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-type" />
+    <title>Mini Recorder</title>
+
+    <!-- Bootstrap 4 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@4.0.2/dist/css/bootstrap-dark.min.css" rel="stylesheet" />
+
+    <!-- jQuery -->
+    <script crossorigin="anonymous" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" rel="stylesheet" />
+    <script crossorigin="anonymous" integrity="sha256-NP9NujdEzS5m4ZxvNqkcbxyHB0dTRy9hG13RwTVBGwo=" src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/fontawesome.min.js"></script>
+
+    <!-- Bootstrap -->
+    <script crossorigin="anonymous" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script crossorigin="anonymous" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"></script>
+    <!-- Bootbox -->
+    <script src="js/bootbox.min.js"></script>
+    <!-- JS Cookie -->
+    <!-- Bilo's stuff -->
+    <script src="js/utils.js?0.01"></script>
+    <script src="js/mychrono.js"></script>
+
+    <style>
+      .recorder-width {
+        max-width: 1024px;
+        width: 80%;
+      }
+
+      /* Compact caption: title centered in the left column, language selector on the right. */
+      .recorder-caption {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 44px;
+      }
+
+      .recorder-caption-title {
+        font-size: 2.3rem;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .recorder-caption-language {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100px;
+      }
+
+      @media (max-width:480px) {
+        .recorder-caption-title {
+          font-size: 1.75rem;
+        }
+
+        .recorder-caption-language {
+          width: 83px;
+        }
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #show-help-button {
+        position: absolute;
+        right: 20pt;
+        top: 10pt;
+        z-index: 1;
+      }
+
+      div.custom-control-right {
+        padding-right: 0px;
+        padding-left: 0;
+        margin-left: 16px;
+        margin-right: 0;
+      }
+
+      div.custom-control-right .custom-control-label::before,
+      div.custom-control-right .custom-control-label::after {
+        right: -1.5rem;
+        left: initial;
+      }
+
+      #rec-preview-stage {
+        position: relative;
+        display: inline-block;
+        width: 80%;
+        max-width: 1024px;
+      }
+
+      #rec-preview-stage #mangiacassette {
+        width: 100%;
+        max-width: none;
+        display: block;
+        object-fit: contain;
+      }
+
+      #webcam-frame {
+        position: absolute;
+        z-index: 3;
+        border: 2px solid #50b8ff;
+        background: rgba(80, 184, 255, .08);
+        cursor: move;
+        touch-action: none;
+        box-sizing: border-box;
+        overflow: visible;
+      }
+
+      #webcam-frame[hidden] {
+        display: none !important;
+      }
+
+      #webcam-frame canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: none;
+      }
+
+      #webcam-frame video {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: fill;
+        pointer-events: none;
+      }
+
+      #webcam-mirror {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        z-index: 5;
+        width: 23px;
+        height: 23px;
+        border: 1px solid rgba(255, 255, 255, .65);
+        border-radius: 4px;
+        background: transparent;
+        color: #fff;
+        font-size: 15px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        touch-action: manipulation;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+      }
+
+      #webcam-mirror[aria-pressed="true"] {
+        border-color: #74c6ff;
+        color: #74c6ff;
+      }
+
+      #webcam-mirror:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+
+      #webcam-frame.mirrored #webcam-inline,
+      #webcam-frame.mirrored #webcam-cutout-preview {
+        transform: scaleX(-1);
+      }
+
+      #webcam-resize {
+        position: absolute;
+        bottom: -8px;
+        right: -8px;
+        width: 19px;
+        height: 19px;
+        border-radius: 4px;
+        background: #50b8ff;
+        border: 2px solid #fff;
+        cursor: nwse-resize;
+        touch-action: none;
+      }
+
+      #mangiacassette {
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(182, 181, 237, 0.25) 100%);
+      }
+
+      #mangiacassette:hover {
+        background: radial-gradient(circle, rgba(255, 255, 255, 1) 50%, rgba(182, 181, 237, 0.5) 100%);
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .loading-content {
+        color: white;
+        text-align: center;
+      }
+    </style>
+    <link href="css/recorder-theme.css?v=1.7" rel="stylesheet" />
+    <!-- Modulo per il caricamento di FFmpeg.WASM -->
+    <script src="js/loadFFmpeg.js" type="module"></script>
+    <script src="js/mediapipe-selfie.js?v=3.0"></script>
+    <script src="js/webcam-pip.js?v=3.0"></script>
+    <script src="js/recorder-appearance.js?v=1.1" defer></script>
+    <script src="js/i18n.js?v=4.0"></script>
+    <script src="js/barbatrucco.js?v=3.0"></script>
+  </head>
+  <body>
+    <!-- begin: container -->
+    <div class="container-fluid">
+      <div class="btn btn-outline-clear hidden" id="show-help-button">
+        <i class="fa fa-question"></i>
+      </div>
+      <!-- begin: row -->
+      <div class="row recorder-page-row">
+        <!-- begin: colonna di sinistra -->
+        <div class="col-sm text-center recorder-column">
+          <div class="recorder-caption">
+            <span class="recorder-caption-title">MiniRecorder</span>
+            <div class="recorder-caption-language">
+              <label class="sr-only" for="ui-language">Language / Lingua</label>
+              <select aria-label="Language / Lingua" class="custom-select custom-select-sm" id="ui-language">
+                <option value="en">English</option>
+                <option value="it">Italiano</option>
+              </select>
+              <button type="button" id="ui-theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
+                <i class="fas fa-sun" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="recorder-main-layout">
+            <div class="recorder-screen-column">
+              <div id="rec-preview-stage">
+                <video class="border rounded" height="280" id="mangiacassette" playsinline=""></video>
+                <div id="rec-idle-art" aria-hidden="true"></div>
+                <div aria-label="Drag to move the webcam" data-i18n-aria-label="webcam-frame" hidden="" id="webcam-frame">
+                  <video autoplay="" id="webcam-inline" muted="" playsinline=""></video>
+                  <canvas id="webcam-cutout-preview"></canvas>
+                  <button aria-label="Mirror webcam" aria-pressed="false" data-i18n-aria-label="webcam-mirror" data-i18n-title="webcam-mirror" id="webcam-mirror" title="Mirror webcam" type="button">⇄</button>
+                  <span class="pip-resize" data-i18n-title="webcam-resize" id="webcam-resize" title="Drag to resize"></span>
+                </div>
+              </div>
+              <div class="recorder-meter">
+                <canvas _width="400" class="border rounded recorder-width" height="40" id="grafico" style="height: 40px"></canvas>
+              </div>
+              <div class="recorder-controls-row">
+                <div class="recorder-button-strip">
+                  <button _style="display: none" class="btn btn-sm btn-success" id="rec-start">Record</button>
+                  <button class="btn btn-sm btn-success disabled" id="rec-pause">Pause</button>
+                  <button class="btn btn-sm btn-success disabled" id="rec-resume">Resume</button>
+                  <button class="btn btn-sm btn-success disabled" id="rec-stop">Stop</button>
+                  <button class="btn btn-sm btn-info disabled" data-i18n-title="silenzia-microfono" disabled="" id="silenzia-microfono" style="width:3rem" title="Mute/unmute microphone">
+                    <i aria-hidden="true" class="fa fa-microphone"></i>
+                  </button>
+                  <button class="btn btn-sm btn-warning disabled" data-i18n-title="voiceover" disabled="" id="voiceover" title="Hold to lower the source audio while speaking. You can also hold the space bar. Only the recording is affected.">Voice over</button>
+                </div>
+                <div class="mt-2" data-i18n-prefix="duration">Duration: <span class="mt-4" id="timer">00:00:00</span>
+                </div>
+              </div>
+            </div>
+            <aside aria-label="Recording options" class="recorder-settings-row recorder-options-panel">
+              <div class="recorder-settings-list">
+                <div class="btn">
+                  <input class="form-check-input" id="record-video" type="checkbox" value="" />
+                  <label class="form-check-label" data-i18n="record-video-label" for="record-video" id="record-video-label">Record video</label>
+                </div>
+                <div class="btn" data-i18n-title="activate-webcam-tip" title="Overlay your webcam on the recording. Drag to move; use the corner handle to resize.">
+                  <input class="form-check-input" id="activate-webcam" type="checkbox" />
+                  <label class="form-check-label" data-i18n="activate-webcam-label" for="activate-webcam">Webcam PiP</label>
+                </div>
+                <div class="btn" data-i18n-title="webcam-cutout-tip" title="Remove the webcam background with MediaPipe (enable Webcam PiP first).">
+                  <input class="form-check-input" disabled="" id="webcam-cutout" type="checkbox" />
+                  <label class="form-check-label" data-i18n="webcam-cutout-label" for="webcam-cutout">Remove webcam background</label>
+                </div>
+                <div class="btn" data-i18n-title="activate-mic-tip" title="Record your voice">
+                  <input class="form-check-input" id="activate-mic" type="checkbox" value="" />
+                  <label class="form-check-label" data-i18n="activate-mic-label" for="activate-mic" id="activate-mic-label">Enable microphone</label>
+                </div>
+                <div class="btn" data-i18n-title="activate-voiceover-tip" title="Lower original audio while speaking">
+                  <input class="form-check-input disabled" disabled="" id="activate-voiceover" type="checkbox" value="" />
+                  <label class="form-check-label disabled" data-i18n="activate-voiceover-label" for="activate-voiceover" id="activate-voiceover-label">Enable voice-over</label>
+                </div>
+                <div class="btn" data-i18n-title="save-mic-tip" title="Save the microphone as a separate file">
+                  <input class="form-check-input disabled" disabled="" id="save-mic" type="checkbox" value="" />
+                  <label class="form-check-label disabled" data-i18n="save-mic-label" for="save-mic" id="save-mic-label">Separate mic track</label>
+                </div>
+              </div>
+              <div class="recorder-download-panel">
+                <a class="mt-2 btn btn-outline-clear disabled" id="rec-download">
+                  <i aria-hidden="true" class="fa fa-download"></i>
+                  <span data-i18n="download-recording">Download recording</span>
+                </a>
+                <a class="mt-2 btn btn-outline-clear disabled" id="mic-download" style="display:none">
+                  <i aria-hidden="true" class="fa fa-download"></i>
+                  <span data-i18n="download-mic">Download mic</span>
+                </a>
+                <div class="mt-2 d-flex justify-content-center" id="audio-format-selector">
+                  <div class="custom-control custom-checkbox">
+                    <input checked="" class="custom-control-input" id="audio-format-mp3" name="audio-format" type="radio" value="mp3" />
+                    <label class="custom-control-label" for="audio-format-mp3">MP3</label>
+                  </div>
+                  <div class="ml-2 custom-control custom-checkbox">
+                    <input class="custom-control-input" id="audio-format-m4a" name="audio-format" type="radio" value="m4a" />
+                    <label class="custom-control-label" for="audio-format-m4a">M4A</label>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+          <!-- end: colonna di sinistra -->
+          <!-- begin: colonna di destra -->
+          <!-- end: colonna di destra -->
+        </div>
+        <!-- end: row -->
+        <div class="col-sm" id="help-box">
+          <div class="card">
+            <div class="card-header">
+              <ul class="nav nav-tabs card-header-tabs" id="istruzioni-list" role="tablist">
+                <li class="nav-item">
+                  <a aria-controls="istruzioni-audio" aria-selected="true" class="nav-link active" data-i18n="help-record" href="#istruzioni-audio" role="tab">How to record</a>
+                </li>
+                <li class="nav-item">
+                  <a aria-controls="istruzioni-audio" aria-selected="true" class="nav-link" data-i18n="help-devices" href="#istruzioni-microfono" role="tab">Microphone &amp; Webcam</a>
+                </li>
+                <li class="nav-item">
+                  <a aria-controls="link-utili" aria-selected="false" class="nav-link" data-i18n="help-links" href="#link-utili" role="tab">Useful links</a>
+                </li>
+                <li class="nav-item">
+                  <a aria-controls="informazioni" aria-selected="false" class="nav-link" data-i18n="help-about" href="#informazioni" role="tab">About</a>
+                </li>
+                <li class="nav-item ml-auto">
+                  <button class="btn btn-sm btn-outline-clear" id="hide-help-button" role="tab">
+                    <i class="fa fa-times"></i>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane active" id="istruzioni-audio" role="tabpanel">
+                  <div data-language="en">
+                    <h5>How to record</h5>
+                    <ol>
+                      <li>Open the video you want to capture in another browser tab and pause it.</li>
+                      <li>Select <b>Record video</b> for video and audio, or leave it unchecked for audio only. Optionally enable microphone and webcam before starting. </li>
+                      <li>Click <b>Record</b>, choose an optional delay, then select the browser tab to share. Make sure <b>Share tab audio</b> is enabled. </li>
+                      <li>Start playback in the shared tab. Return here to pause, resume or stop the recording.</li>
+                      <li>Preview the result and click <b>Download recording</b>. </li>
+                    </ol>
+                    <p>The webcam overlay can be moved or resized during recording.</p>
+                  </div>
+                  <div data-language="it">
+                    <h5>Come registrare</h5>
+                    <ol>
+                      <li>Apri il video da acquisire in un’altra scheda del browser e mettilo in pausa.</li>
+                      <li>Seleziona <b>Registra video</b> per acquisire audio e video, oppure lascia la casella disattivata per il solo audio. Prima di partire puoi attivare microfono e webcam. </li>
+                      <li>Premi <b>Record</b>, imposta un eventuale ritardo e seleziona la scheda da condividere. Verifica che sia selezionato <b>Condividi audio della scheda</b>. </li>
+                      <li>Avvia la riproduzione nella scheda condivisa. Torna qui per mettere in pausa, riprendere o fermare la registrazione.</li>
+                      <li>Controlla il risultato e premi <b>Scarica registrazione</b>. </li>
+                    </ol>
+                    <p>Puoi spostare e ridimensionare la webcam anche durante la registrazione.</p>
+                  </div>
+                </div>
+                <div class="tab-pane" id="istruzioni-microfono" role="tabpanel">
+                  <div data-language="en">
+                    <h5>Microphone &amp; Webcam</h5>
+                    <p>
+                      <b>Microphone:</b> check <b>Enable microphone</b> before recording and allow access when the browser asks. Your voice is mixed with the captured audio. Enable <b>Separate mic track</b> to download it as a separate file.
+                    </p>
+                    <p>
+                      <b>Voice-over:</b> enable <b>Voice-over</b> and hold the button or the space bar while speaking to reduce the original audio level in the recording.
+                    </p>
+                    <p>
+                      <b>Webcam:</b> enable <b>Record video</b>, then check <b>Webcam PiP</b> and allow camera access. Drag the camera preview to reposition it, or drag its bottom-right handle to resize it, even while recording.
+                    </p>
+                    <p>
+                      <b>Remove webcam background</b> optionally uses MediaPipe to show only the person. Its model is downloaded on first use.
+                    </p>
+                  </div>
+                  <div data-language="it">
+                    <h5>Microfono e webcam</h5>
+                    <p>
+                      <b>Microfono:</b> seleziona <b>Attiva microfono</b> prima della registrazione e autorizza l’accesso quando richiesto. La voce viene miscelata con l’audio acquisito. Attiva <b>Separa mic.</b> per scaricarla anche in un file separato.
+                    </p>
+                    <p>
+                      <b>Voice-over:</b> attiva <b>Voice over</b> e tieni premuto il pulsante o la barra spaziatrice mentre parli per abbassare il volume originale nella registrazione.
+                    </p>
+                    <p>
+                      <b>Webcam:</b> attiva <b>Registra video</b>, seleziona <b>Webcam PiP</b> e autorizza la videocamera. Trascina l’anteprima per spostarla oppure la maniglia in basso a destra per ridimensionarla, anche durante la registrazione.
+                    </p>
+                    <p>
+                      <b>Scontorna webcam</b> usa facoltativamente MediaPipe per mostrare solo la persona. Il modello viene scaricato al primo utilizzo.
+                    </p>
+                  </div>
+                </div>
+                <div aria-labelledby="link-utili-tab" class="tab-pane" id="link-utili" role="tabpanel">
+                  <div data-language="en">
+                    <h5>Useful links</h5>
+                    <p>Tools for viewing, editing and converting recordings:</p>
+                    <ul>
+                      <li>
+                        <a href="https://conv.ditlab.it/" target="_blank">Converter</a>: in-browser media conversion.
+                      </li>
+                      <li>
+                        <a href="https://www.audacityteam.org/" target="_blank">Audacity</a>: free audio editor.
+                      </li>
+                      <li>
+                        <a href="https://handbrake.fr/" target="_blank">HandBrake</a>: convert WebM video to other formats.
+                      </li>
+                      <li>
+                        <a href="https://www.videolan.org/vlc/" target="_blank">VLC</a>: multimedia player.
+                      </li>
+                      <li>
+                        <a href="https://rebooth.ditlab.it/" target="_blank">ReBooth</a> · <a href="https://intrain.ditlab.it/" target="_blank">InTrain</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <div data-language="it">
+                    <h5>Link utili</h5>
+                    <p>Strumenti per riprodurre, modificare e convertire le registrazioni:</p>
+                    <ul>
+                      <li>
+                        <a href="https://conv.ditlab.it/" target="_blank">Converter</a>: conversione multimediale nel browser.
+                      </li>
+                      <li>
+                        <a href="https://www.audacityteam.org/" target="_blank">Audacity</a>: editor audio gratuito.
+                      </li>
+                      <li>
+                        <a href="https://handbrake.fr/" target="_blank">HandBrake</a>: converte video WebM in altri formati.
+                      </li>
+                      <li>
+                        <a href="https://www.videolan.org/vlc/" target="_blank">VLC</a>: riproduttore multimediale.
+                      </li>
+                      <li>
+                        <a href="https://rebooth.ditlab.it/" target="_blank">ReBooth</a> · <a href="https://intrain.ditlab.it/" target="_blank">InTrain</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div aria-labelledby="informazioni-tab" class="tab-pane" id="informazioni" role="tabpanel">
+                  <div data-language="en">
+                    <h5>About</h5>
+                    <ul>
+                      <li>Created by Gabriele Carioli for the Department of Interpreting and Translation, University of Bologna. Free, open-source software under the MIT license.</li>
+                      <li>You are responsible for how you use this application, including compliance with copyright.</li>
+                      <li>Preferences are saved in this browser with localStorage; no application cookies are needed.</li>
+                      <li>Recording and conversion take place in your browser. Media files are not uploaded to this application’s server. Optional MediaPipe libraries and model files are downloaded from third-party hosting.</li>
+                      <li>FFmpeg.wasm converts audio to MP3 or M4A; recorded video is saved as WebM.</li>
+                      <li>Designed primarily for Chromium-based browsers such as Chrome, Edge and Brave.</li>
+                    </ul>
+                  </div>
+                  <div data-language="it">
+                    <h5>Informazioni</h5>
+                    <ul>
+                      <li>Realizzato da Gabriele Carioli per il Dipartimento di Interpretazione e Traduzione dell’Università di Bologna. Software gratuito e open source con licenza MIT.</li>
+                      <li>Sei responsabile dell’utilizzo dell’applicazione, incluso il rispetto del diritto d’autore.</li>
+                      <li>Le preferenze vengono salvate nel browser tramite localStorage; non servono cookie applicativi.</li>
+                      <li>Registrazioni e conversioni avvengono nel browser. I file multimediali non vengono caricati sul server dell’applicazione. Le librerie MediaPipe e il modello opzionali vengono scaricati da servizi esterni.</li>
+                      <li>FFmpeg.wasm converte l’audio in MP3 o M4A; il video viene salvato in formato WebM.</li>
+                      <li>Progettato principalmente per browser Chromium, come Chrome, Edge e Brave.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end: container --->
+      <div class="loading-overlay" id="loading-overlay" style="display:none">
+        <div class="loading-content text-center">
+          <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;"></div>
+          <p class="text-light mt-3" id="loading-overlay-text"></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
