@@ -1,0 +1,44 @@
+name: Import FFmpeg WebAssembly
+
+# Runs once when this workflow is first added, or manually from Actions.
+on:
+  push:
+    paths:
+      - '.github/workflows/import-ffmpeg-wasm.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Fetch pinned official @ffmpeg/core-mt binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            'https://registry.npmjs.org/@ffmpeg/core-mt/-/core-mt-0.12.10.tgz' \
+            --output "$RUNNER_TEMP/core-mt.tgz"
+          mkdir -p js/@ffmpeg/core-mt/dist/esm
+          tar -xOzf "$RUNNER_TEMP/core-mt.tgz" \
+            package/dist/esm/ffmpeg-core.wasm \
+            > js/@ffmpeg/core-mt/dist/esm/ffmpeg-core.wasm
+          test "$(wc -c < js/@ffmpeg/core-mt/dist/esm/ffmpeg-core.wasm)" -gt 30000000
+          sha256sum js/@ffmpeg/core-mt/dist/esm/ffmpeg-core.wasm
+
+      - name: Commit binary if missing or changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f js/@ffmpeg/core-mt/dist/esm/ffmpeg-core.wasm
+          if ! git diff --cached --quiet; then
+            git commit -m 'vendor: add pinned FFmpeg core-mt WASM'
+            git push
+          fi
