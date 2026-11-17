@@ -1251,3 +1251,20 @@ html[data-rec-theme="light"] #ui-devices-toggle { background: #fff; border-color
     .bt-device-dialog .bt-device-fields { grid-template-columns: 1fr; gap: 4px; }
     .bt-device-dialog .bt-device-fields label:not(:first-child) { margin-top: 8px; }
 }
+
+/* Override Bootstrap Dark's .custom-select in the Bootbox device dialog. */
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select {
+    color: #25384e;
+    background-color: #fff;
+    border-color: #b9c8da;
+}
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select:focus {
+    color: #25384e;
+    background-color: #fff;
+    border-color: #69a7d9;
+    box-shadow: 0 0 0 2px #69baff33;
+}
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select:disabled {
+    background-color: #edf2f7;
+    color: #64778a;
+}
