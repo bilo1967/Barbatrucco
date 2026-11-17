@@ -1,0 +1,1204 @@
+/* MiniRecorder CSS */
+
+:root {
+    --ui-bg: #0c1422;
+    --ui-card: #152234;
+    --ui-card-alt: #1a2a3f;
+    --ui-stroke: #30425b;
+    --ui-text: #e8eef7;
+    --ui-muted: #9fb0c8;
+    --ui-accent: #69baff;
+    --ui-accent-hover: #96d1ff;
+    --ui-success: #35c6a2;
+}
+
+html {
+    min-height: 100%;
+    background: var(--ui-bg);
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--ui-text);
+    background: radial-gradient(
+            ellipse at 52% -180px,
+            #203653 0,
+            transparent 54%
+        ),
+        var(--ui-bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+}
+
+body > .container-fluid {
+    max-width: 1580px;
+    padding: 22px 26px 38px;
+}
+
+body > .container-fluid > .row {
+    margin: 0 -10px;
+    align-items: flex-start;
+}
+
+body > .container-fluid > .row > .col-sm {
+    padding: 0 10px;
+    min-width: 0;
+}
+
+body > .container-fluid > .row > .col-sm.text-center:first-child {
+    padding: 0 24px 14px;
+    background: linear-gradient(165deg, #19283d, #122033 73%);
+    border: 1px solid var(--ui-stroke);
+    border-radius: 15px;
+    box-shadow: 0 14px 38px #0003;
+}
+
+.recorder-caption {
+    height: 44px;
+    margin: 0 0 14px;
+    border-bottom: 1px solid #304159;
+}
+
+.recorder-caption-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+}
+
+.recorder-caption-language {
+    width: 104px;
+}
+
+.recorder-caption-language .custom-select {
+    height: 29px;
+    padding: 3px 25px 3px 10px;
+    font-size: 12px;
+    color: var(--ui-text);
+    background-color: #24364d;
+    border: 1px solid #445771;
+    border-radius: 7px;
+}
+
+.recorder-caption-language .custom-select:focus {
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 2px #69baff33;
+}
+
+.recorder-width {
+    max-width: none;
+    width: 100%;
+}
+
+#rec-preview-stage {
+    width: 100%;
+    max-width: none;
+    display: block;
+    overflow: hidden;
+    border-radius: 11px;
+    background: #080e18;
+    border: 1px solid #3b4f68;
+    box-shadow: inset 0 1px 8px #0007;
+}
+
+#rec-preview-stage #mangiacassette {
+    display: block;
+    width: 100%;
+    height: clamp(230px, 30vw, 365px);
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #0a111e !important;
+    object-fit: contain;
+}
+
+#rec-preview-stage #mangiacassette:hover {
+    background: #0a111e !important;
+}
+
+#webcam-frame {
+    border-color: #81caff;
+    box-shadow: 0 4px 20px #0007;
+}
+
+#webcam-resize {
+    background: #75bdff;
+}
+
+/* Audio meter remains distinct from the preview. */
+#grafico {
+    display: block;
+    width: 100% !important;
+    max-width: none;
+    height: 40px !important;
+    margin: 9px 0 0;
+    background: #101d2d;
+    border: 1px solid #31465f !important;
+    border-radius: 8px !important;
+}
+
+.recorder-settings-row {
+    margin-top: 13px;
+}
+
+.recorder-settings-row > .col-sm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px 8px;
+    padding: 0 12px;
+}
+
+.recorder-settings-row > .col-sm > .btn {
+    margin: 0 !important;
+    padding: 7px 11px 7px 27px;
+    background: #23354b;
+    border: 1px solid #3b4e64;
+    border-radius: 8px;
+    color: #d8e3f1;
+    font-size: 12px;
+    line-height: 1.4;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.recorder-settings-row > .col-sm > .btn:hover {
+    background: #2b435e;
+    border-color: #6685a8;
+}
+
+.recorder-settings-row .form-check-input {
+    margin-left: -16px;
+    margin-top: 3px;
+    accent-color: #73bfff;
+    cursor: pointer;
+}
+
+.recorder-settings-row label {
+    margin: 0;
+    cursor: pointer;
+}
+
+.recorder-settings-row .form-check-input:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recorder-controls-row {
+    margin-top: 16px;
+}
+
+.recorder-controls-row > .col-sm-12 {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 8px 0;
+    border-top: 1px solid #31425a;
+}
+
+.recorder-controls-row button.btn {
+    min-height: 36px;
+    padding: 7px 14px;
+    margin: 0 2px 6px;
+    font-weight: 600;
+    border-radius: 8px;
+    border-width: 1px;
+    transition: background-color 0.15s, transform 0.12s, border-color 0.15s;
+}
+
+.recorder-controls-row button.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+#rec-start.btn-success {
+    background: #248e75;
+    border-color: #35b396;
+    color: #fff;
+}
+
+#rec-start.btn-success:hover {
+    background: #2ba98a;
+}
+
+#rec-pause.btn-success,
+#rec-resume.btn-success,
+#rec-stop.btn-success {
+    background: #243b54;
+    border-color: #416080;
+    color: #e4f0ff;
+}
+
+#rec-stop.btn-success:not(.disabled):not(:disabled) {
+    border-color: #d28d91;
+    color: #ffdadc;
+}
+
+#rec-pause.btn-success:hover,
+#rec-resume.btn-success:hover,
+#rec-stop.btn-success:hover {
+    background: #304b68;
+}
+
+#silenzia-microfono.btn-info {
+    background: #263b53;
+    border-color: #57738f;
+}
+
+#voiceover.btn-warning {
+    background: #715829;
+    border-color: #a9894c;
+    color: #fff2d6;
+}
+
+.recorder-controls-row .disabled {
+    opacity: 0.42;
+}
+
+#timer {
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+    letter-spacing: 0.035em;
+    color: #eaf3ff;
+}
+
+.recorder-controls-row [data-i18n-prefix="duration"] {
+    color: var(--ui-muted);
+    margin-top: 7px !important;
+    font-size: 12px;
+}
+
+#rec-download,
+#mic-download {
+    text-decoration: none;
+    margin-top: 10px !important;
+    color: #9fd7ff;
+    border: 1px solid #456483;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+    background: #1d324a;
+}
+
+#rec-download:hover,
+#mic-download:hover {
+    color: white;
+    background: #294764;
+}
+
+#rec-download.disabled,
+#mic-download.disabled {
+    color: #6c829c;
+    background: transparent;
+}
+
+#audio-format-selector {
+    margin-top: 12px !important;
+    gap: 10px;
+    color: #b8c8d9;
+    font-size: 12px;
+}
+
+#audio-format-selector .ml-2 {
+    margin-left: 0 !important;
+}
+
+#audio-format-selector .custom-control-label {
+    cursor: pointer;
+}
+
+#help-box .card {
+    overflow: hidden;
+    background: #152235;
+    color: var(--ui-text);
+    border: 1px solid var(--ui-stroke);
+    border-radius: 15px;
+    box-shadow: 0 14px 38px #0002;
+}
+
+#help-box .card-header {
+    background: #1b2b41;
+    border-bottom: 1px solid #334860;
+    padding: 7px 7px 0;
+}
+
+#help-box .nav-tabs {
+    border-bottom: 0;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+#help-box .nav-tabs .nav-link {
+    padding: 9px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 0;
+    border-radius: 7px 7px 0 0;
+    color: #aabdd4;
+}
+
+#help-box .nav-tabs .nav-link:hover {
+    color: #fff;
+    background: #304661;
+}
+
+#help-box .nav-tabs .nav-link.active {
+    color: #eaf5ff;
+    background: #304963;
+    box-shadow: inset 0 -2px var(--ui-accent);
+}
+
+#help-box .card-body {
+    padding: 22px 25px;
+    text-align: left;
+    line-height: 1.65;
+    color: #d4e0ee;
+}
+
+#help-box .card-body h5 {
+    font-size: 1.13rem;
+    font-weight: 680;
+    color: #f1f7ff;
+    margin: 0 0 15px;
+}
+
+#help-box .card-body p {
+    margin-bottom: 13px;
+}
+
+#help-box .card-body li {
+    margin-bottom: 8px;
+    padding-left: 2px;
+}
+
+#help-box .card-body ol,
+#help-box .card-body ul {
+    padding-left: 21px;
+}
+
+#help-box .card-body a {
+    color: #83caff;
+    text-decoration: none;
+}
+
+#help-box .card-body a:hover {
+    color: #b8e0ff;
+    text-decoration: underline;
+}
+
+#hide-help-button {
+    color: #a8bed8;
+    margin: -5px -8px 0 0;
+}
+
+#show-help-button {
+    z-index: 10;
+    right: 20px;
+    top: 12px;
+    color: #b4d2eb;
+    border: 1px solid #4b6380;
+    border-radius: 8px;
+    background: #1c3046;
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible,
+a:focus-visible {
+    outline: 2px solid #8bcaff;
+    outline-offset: 2px;
+}
+
+.loading-overlay {
+    background: #07101edb;
+    backdrop-filter: blur(5px);
+}
+
+.loading-content {
+    padding: 35px;
+    border: 1px solid #3c5472;
+    background: #1b2b40;
+    border-radius: 14px;
+}
+
+@media (max-width: 1100px) {
+    body > .container-fluid {
+        padding: 14px 16px 30px;
+    }
+
+    body > .container-fluid > .row > .col-sm.text-center:first-child {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    #help-box .card-body {
+        padding: 17px;
+    }
+
+}
+
+@media (max-width: 767.98px) {
+    body > .container-fluid > .row > .col-sm {
+        flex-basis: 100%;
+        margin-bottom: 14px;
+    }
+
+    #rec-preview-stage #mangiacassette {
+        height: clamp(210px, 54vw, 360px);
+    }
+
+    .recorder-caption-title {
+        font-size: 1.22rem;
+    }
+
+    .recorder-settings-row > .col-sm > .btn {
+        font-size: 12px;
+    }
+
+    #help-box .nav-tabs .nav-link {
+        padding: 8px 9px;
+    }
+
+}
+
+@media (max-width: 420px) {
+    .recorder-caption-language {
+        width: 89px;
+    }
+
+    .recorder-controls-row button.btn {
+        padding: 7px 10px;
+    }
+
+}
+
+
+/* Compact desktop layout: larger recorder, narrower documentation panel. */
+@media (min-width: 992px) {
+    body > .container-fluid > .row > .col-sm.text-center:first-child {
+        flex: 0 0 70%;
+        max-width: 70%;
+    }
+
+    body > .container-fluid > .row > #help-box {
+        flex: 0 0 30%;
+        max-width: 30%;
+    }
+
+}
+
+.recorder-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(168px, 195px);
+    align-items: start;
+    gap: 16px;
+}
+
+.recorder-screen-column {
+    min-width: 0;
+}
+
+.recorder-meter {
+    margin-top: 8px;
+}
+
+.recorder-meter #grafico {
+    margin: 0;
+}
+
+.recorder-options-panel {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.recorder-options-panel .recorder-settings-list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+}
+
+.recorder-options-panel .recorder-settings-list > .btn {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    margin: 0 !important;
+    text-align: left;
+    white-space: normal;
+    background: #23354b;
+    border: 1px solid #3b4e64;
+    border-radius: 8px;
+    color: #d8e3f1;
+    padding: 8px 9px 8px 30px;
+    font-size: 12px;
+    line-height: 1.35;
+    min-height: 38px;
+}
+
+.recorder-options-panel .recorder-settings-list > .btn:hover {
+    background: #2b435e;
+    border-color: #6685a8;
+}
+
+.recorder-options-panel .form-check-input {
+    margin-left: -19px;
+    margin-top: 0;
+    position: absolute;
+    left: 29px;
+    top: 50%;
+    transform: translateY(-50%);
+    accent-color: #73bfff;
+}
+
+.recorder-options-panel label {
+    margin: 0;
+    cursor: pointer;
+}
+
+.recorder-options-panel .form-check-input:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1199.98px) and (min-width: 768px) {
+    .recorder-main-layout {
+        grid-template-columns: minmax(0, 1fr) 165px;
+        gap: 10px;
+    }
+
+    .recorder-options-panel .recorder-settings-list > .btn {
+        font-size: 11px;
+    }
+
+}
+
+@media (max-width: 991.98px) {
+    body > .container-fluid > .row > #help-box {
+        margin-top: 14px;
+    }
+
+}
+
+@media (max-width: 767.98px) {
+    .recorder-main-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .recorder-screen-column,
+    .recorder-options-panel {
+        width: 100%;
+    }
+
+    .recorder-options-panel .recorder-settings-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+}
+
+@media (max-width: 420px) {
+    .recorder-options-panel .recorder-settings-list {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* Compact 2:1 layout revision: source preview, controls and optional downloads. */
+@media (min-width: 992px) {
+    body > .container-fluid > .row > .recorder-column {
+        flex: 0 0 66.666667% !important;
+        max-width: 66.666667% !important;
+    }
+
+    body > .container-fluid > .row > #help-box {
+        flex: 0 0 33.333333% !important;
+        max-width: 33.333333% !important;
+    }
+
+}
+
+.recorder-main-layout {
+    grid-template-columns: minmax(0, 1fr) 156px;
+    align-items: stretch;
+    gap: 13px;
+}
+
+.recorder-screen-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.recorder-options-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.recorder-options-panel .recorder-settings-list {
+    gap: 5px;
+}
+
+.recorder-options-panel .recorder-settings-list > .btn {
+    min-height: 31px;
+    padding: 5px 6px 5px 25px;
+    font-size: 11px;
+    line-height: 1.25;
+    border-radius: 6px;
+}
+
+.recorder-options-panel .form-check-input {
+    left: 25px;
+    margin-left: -17px;
+}
+
+.recorder-controls-row {
+    margin-top: 9px;
+    text-align: center;
+}
+
+.recorder-button-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.recorder-button-strip button.btn {
+    min-height: 34px;
+    padding: 6px 11px;
+    margin: 0;
+}
+
+.recorder-controls-row [data-i18n-prefix="duration"] {
+    margin-top: 7px !important;
+}
+
+.recorder-download-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    margin-top: auto;
+    padding-top: 12px;
+    gap: 6px;
+}
+
+.recorder-download-panel #rec-download,
+.recorder-download-panel #mic-download {
+    display: block;
+    margin: 0 !important;
+    padding: 7px 6px;
+    font-size: 11px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: normal;
+}
+
+.recorder-download-panel #mic-download[style*="display:none"] {
+    display: none !important;
+}
+
+.recorder-download-panel #audio-format-selector {
+    margin: 4px 0 0 !important;
+    gap: 8px;
+    justify-content: center;
+}
+
+.recorder-controls-row > .col-sm-12 {
+    border: 0;
+}
+
+@media (max-width: 1199.98px) and (min-width: 768px) {
+    .recorder-main-layout {
+        grid-template-columns: minmax(0, 1fr) 150px;
+        gap: 9px;
+    }
+
+}
+
+@media (max-width: 767.98px) {
+    .recorder-options-panel {
+        width: 100%;
+    }
+
+    .recorder-options-panel .recorder-settings-list > .btn {
+        min-height: 32px;
+    }
+
+    .recorder-download-panel {
+        margin-top: 10px;
+    }
+
+}
+
+
+/* v4: exact two-column page + two-column recorder. Grid accounts for gutters. */
+@media (min-width: 768px) {
+    body > .container-fluid > .recorder-page-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        column-gap: 16px;
+        margin: 0;
+        align-items: start;
+    }
+
+    body > .container-fluid > .recorder-page-row > .recorder-column,
+    body > .container-fluid > .recorder-page-row > #help-box {
+        box-sizing: border-box;
+        flex: none !important;
+        width: auto !important;
+        max-width: none !important;
+        min-width: 0;
+        margin: 0;
+    }
+
+    body > .container-fluid > .recorder-page-row > #help-box {
+        padding: 0;
+    }
+
+    body > .container-fluid > .recorder-page-row > .recorder-column {
+        padding: 0 18px 18px;
+    }
+
+    /* When help is hidden, use all the available width. */
+    body
+        > .container-fluid
+        > .recorder-page-row:has(> #help-box[style*="display: none"]) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+}
+
+/* Header is a separate row; the following row has preview and narrow settings. */
+.recorder-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(136px, 156px);
+    column-gap: 12px;
+    align-items: stretch;
+}
+
+.recorder-screen-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.recorder-options-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 100%;
+}
+
+.recorder-options-panel .recorder-settings-list {
+    flex: 0 0 auto;
+}
+
+.recorder-options-panel .recorder-download-panel {
+    display: flex;
+    flex-direction: column;
+    margin-top: auto;
+    justify-content: flex-end;
+    padding-top: 12px;
+    width: 100%;
+}
+
+.recorder-controls-row {
+    margin-top: 10px;
+}
+
+.recorder-controls-row > .col-sm-12 {
+    border-top: 0 !important;
+}
+
+.recorder-meter {
+    margin-top: 8px;
+}
+
+@media (max-width: 767.98px) {
+    body > .container-fluid > .recorder-page-row {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+    }
+
+    body > .container-fluid > .recorder-page-row > .recorder-column,
+    body > .container-fluid > .recorder-page-row > #help-box {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 14px;
+    }
+
+    .recorder-main-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .recorder-options-panel {
+        min-height: 0;
+    }
+
+}
+
+
+/* v5: allow help navigation to wrap without clipping inside card-header.
+   Bootstrap's .card-header-tabs negative bottom margin assumes a single line. */
+#help-box .card-header {
+    height: auto;
+    min-height: 0;
+}
+
+#help-box .card-header .card-header-tabs {
+    margin: 0 !important;
+    padding: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 3px;
+}
+
+/* Keep a readable, consistent size at every viewport width. */
+.recorder-options-panel .recorder-settings-list > .btn {
+    font-size: 12px;
+}
+
+
+/* v6: idle art and theme selection (purely visual). */
+.recorder-caption-language {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: auto !important;
+}
+
+.recorder-caption-language .custom-select {
+    width: 104px;
+    flex: 0 0 104px;
+    height: 29px;
+}
+
+#ui-theme-toggle {
+    display: inline-flex;
+    flex: 0 0 29px;
+    align-items: center;
+    justify-content: center;
+    width: 29px;
+    height: 29px;
+    padding: 0;
+    border: 1px solid #445771;
+    border-radius: 7px;
+    color: var(--ui-text);
+    background: #24364d;
+    cursor: pointer;
+}
+
+#ui-theme-toggle:hover {
+    border-color: var(--ui-accent);
+}
+
+#ui-theme-toggle:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+
+#rec-preview-stage {
+    isolation: isolate;
+}
+
+#rec-idle-art {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+            0deg,
+            rgba(7, 16, 28, 0.2),
+            rgba(8, 20, 35, 0.12)
+        ),
+        url("../img/recorder-idle.webp") center / cover no-repeat;
+    opacity: 0.83;
+    transition: opacity 0.2s ease;
+}
+
+#rec-preview-stage.has-media #rec-idle-art {
+    opacity: 0;
+    visibility: hidden;
+}
+
+#rec-preview-stage #webcam-frame {
+    z-index: 3;
+}
+
+/* Light palette: keep original dark media monitor, change surrounding chrome. */
+html[data-rec-theme="light"] {
+    --ui-bg: #f0f4f9;
+    --ui-card: #ffffff;
+    --ui-card-alt: #f5f8fc;
+    --ui-stroke: #cdd7e4;
+    --ui-text: #1b2a3b;
+    --ui-muted: #53697e;
+    --ui-accent: #2168a4;
+    --ui-accent-hover: #0a528d;
+    --ui-success: #17886e;
+}
+
+html[data-rec-theme="light"],
+html[data-rec-theme="light"] body {
+    background: #f0f4f9;
+    color: var(--ui-text);
+}
+
+html[data-rec-theme="light"] body {
+    background: radial-gradient(
+            ellipse at 52% -180px,
+            #dbeafb 0,
+            transparent 54%
+        ),
+        var(--ui-bg);
+}
+
+html[data-rec-theme="light"]
+    body
+    > .container-fluid
+    > .row
+    > .col-sm.text-center:first-child {
+    background: linear-gradient(160deg, #fff, #f4f8fc 75%);
+    border-color: #cdd7e4;
+    box-shadow: 0 12px 32px #213d5a16;
+}
+
+html[data-rec-theme="light"] .recorder-caption {
+    border-color: #d5dfeb;
+}
+
+html[data-rec-theme="light"] .recorder-caption-language .custom-select,
+html[data-rec-theme="light"] #ui-theme-toggle {
+    background-color: #fff;
+    border-color: #b9c8da;
+    color: #25384e;
+}
+
+html[data-rec-theme="light"]
+    .recorder-options-panel
+    .recorder-settings-list
+    > .btn {
+    background: #edf3fa;
+    border-color: #cbd8e7;
+    color: #24374b;
+}
+
+html[data-rec-theme="light"]
+    .recorder-options-panel
+    .recorder-settings-list
+    > .btn:hover {
+    background: #e1ecf8;
+    border-color: #91adc9;
+}
+
+html[data-rec-theme="light"] .recorder-options-panel .form-check-input {
+    accent-color: #1768a7;
+}
+
+html[data-rec-theme="light"]
+    .recorder-controls-row
+    button.btn:not(#rec-start):not(#voiceover):not(#silenzia-microfono) {
+    background: #ecf2f9;
+    border-color: #bfcee0;
+    color: #213b56;
+}
+
+html[data-rec-theme="light"] #rec-pause.btn-success:hover,
+html[data-rec-theme="light"] #rec-resume.btn-success:hover,
+html[data-rec-theme="light"] #rec-stop.btn-success:hover {
+    background: #dce9f5 !important;
+}
+
+html[data-rec-theme="light"] #silenzia-microfono.btn-info {
+    background: #e4edf7;
+    border-color: #b7c9dd;
+    color: #25425d;
+}
+
+html[data-rec-theme="light"] #voiceover.btn-warning {
+    background: #ffe9bd;
+    border-color: #d9b56e;
+    color: #5d461a;
+}
+
+html[data-rec-theme="light"] #timer {
+    color: #203a54;
+}
+
+html[data-rec-theme="light"]
+    .recorder-controls-row
+    [data-i18n-prefix="duration"] {
+    color: #586d80;
+}
+
+html[data-rec-theme="light"] #rec-download,
+html[data-rec-theme="light"] #mic-download {
+    background: #e6f0fb;
+    color: #145b93;
+    border-color: #b8cee3;
+}
+
+html[data-rec-theme="light"] #rec-download:hover,
+html[data-rec-theme="light"] #mic-download:hover {
+    background: #d5e8f8;
+    color: #104e82;
+}
+
+html[data-rec-theme="light"] #rec-download.disabled,
+html[data-rec-theme="light"] #mic-download.disabled {
+    background: transparent;
+    color: #8495a8;
+}
+
+html[data-rec-theme="light"] #audio-format-selector {
+    color: #465b71;
+}
+
+html[data-rec-theme="light"] #help-box .card {
+    background: #fff;
+    border-color: #cdd7e4;
+    color: #203246;
+    box-shadow: 0 12px 32px #213d5a12;
+}
+
+html[data-rec-theme="light"] #help-box .card-header {
+    background: #ecf2f9;
+    border-color: #d0dbe8;
+}
+
+html[data-rec-theme="light"] #help-box .nav-tabs .nav-link {
+    color: #49657d;
+}
+
+html[data-rec-theme="light"] #help-box .nav-tabs .nav-link:hover {
+    background: #dce8f5;
+    color: #153b5a;
+}
+
+html[data-rec-theme="light"] #help-box .nav-tabs .nav-link.active {
+    background: #fff;
+    color: #164d78;
+}
+
+html[data-rec-theme="light"] #help-box .card-body {
+    color: #344b61;
+}
+
+html[data-rec-theme="light"] #help-box .card-body h5 {
+    color: #1c3348;
+}
+
+html[data-rec-theme="light"] #help-box .card-body a {
+    color: #176ba8;
+}
+
+html[data-rec-theme="light"] #help-box .card-body a:hover {
+    color: #074774;
+}
+
+html[data-rec-theme="light"] #hide-help-button {
+    color: #486078;
+}
+
+html[data-rec-theme="light"] #show-help-button {
+    background: #edf4fb;
+    color: #275577;
+    border-color: #bacddd;
+}
+
+html[data-rec-theme="light"] .loading-overlay {
+    background: #172b45bb;
+}
+
+html[data-rec-theme="light"] #rec-preview-stage {
+    border-color: #b7c8d8;
+}
+
+html[data-rec-theme="light"] #grafico {
+    background: #e5edf6;
+    border-color: #bfcede !important;
+}
+
+@media (max-width: 480px) {
+    .recorder-caption-language .custom-select {
+        width: 79px;
+        flex-basis: 79px;
+        padding-left: 6px;
+    }
+
+}
+
+
+/* v8: Bootbox dialogs follow the selected UI theme. */
+.bootbox .modal-content {
+    color: var(--ui-text);
+    background: var(--ui-card);
+    border: 1px solid var(--ui-stroke);
+    border-radius: 13px;
+    box-shadow: 0 18px 54px #0005;
+}
+
+.bootbox .modal-header {
+    border-bottom: 1px solid var(--ui-stroke);
+}
+
+.bootbox .modal-footer {
+    border-top: 1px solid var(--ui-stroke);
+}
+
+.bootbox .modal-title,
+.bootbox .bootbox-body {
+    color: var(--ui-text);
+}
+
+.bootbox .close {
+    color: var(--ui-text);
+    text-shadow: none;
+    opacity: 0.7;
+}
+
+.bootbox .close:hover {
+    color: var(--ui-text);
+    opacity: 1;
+}
+
+.bootbox .form-control,
+.bootbox .bootbox-input {
+    color: var(--ui-text);
+    background: var(--ui-card-alt);
+    border: 1px solid var(--ui-stroke);
+}
+
+.bootbox .form-control:focus,
+.bootbox .bootbox-input:focus {
+    color: var(--ui-text);
+    background: var(--ui-card-alt);
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 2px #69baff33;
+}
+
+.bootbox .btn-secondary {
+    color: var(--ui-text);
+    background: var(--ui-card-alt);
+    border-color: var(--ui-stroke);
+}
+
+.bootbox .btn-secondary:hover {
+    color: var(--ui-text);
+    background: var(--ui-stroke);
+}
+
+/* The output file already contains the webcam; never overlay the live PiP while playing it. */
+#rec-preview-stage.playback-media #webcam-frame {
+    display: none !important;
+}
