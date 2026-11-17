@@ -1,6 +1,6 @@
 # Barbatrucco / MiniRecorder
 
-**Barbatrucco** (MiniRecorder) is a browser-based audio and video recorder for capturing media played in another browser tab, optionally combining it with microphone audio and a movable webcam overlay.
+**Barbatrucco** (MiniRecorder) is a browser-based audio and video recorder for capturing media played in another browser tab, application or screen, optionally combining it with microphone audio and a movable webcam overlay.
 
 **All recording, audio mixing, video composition, segmentation inference, and media conversion run locally in your browser. Recorded audio and video are not uploaded to the Barbatrucco web server.** Some application libraries and the optional MediaPipe segmentation model are currently downloaded from third-party hosts; these requests download software assets, not recordings.
 
