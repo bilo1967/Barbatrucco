@@ -1332,3 +1332,9 @@ html[data-rec-theme="light"] .bt-level-peak { background: #304b67; }
 html[data-rec-theme="light"] .bt-mixer-panel { box-shadow: 0 10px 30px #152b4a33; }
 
 .bt-mixer-panel.bt-open-up { top: auto; bottom: calc(100% + 4px); }
+
+/* Keep meter labels on a single line; still narrower than the preview. */
+.bt-level-meters { width: min(100%, 360px); }
+.bt-level-label { flex: 0 0 66px; white-space: nowrap; }
+.bt-level-row { min-width: 0; }
+.bt-level-track { min-width: 0; }

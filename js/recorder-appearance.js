@@ -32,9 +32,33 @@
             const playbackFile = !player.srcObject && Boolean(player.getAttribute('src') || player.currentSrc);
             stage.classList.toggle('playback-media', playbackFile);
         }
-        ['loadedmetadata', 'loadeddata', 'emptied', 'abort', 'error', 'playing'].forEach(e => player.addEventListener(e, updatePlaceholder));
-        new MutationObserver(updatePlaceholder).observe(player, {attributes:true, attributeFilter:['src']});
-        updatePlaceholder();
+        // The overlay shows recording time during capture and position / total
+        // duration when playing a saved file. Keep the player controls intact.
+        const clock = document.getElementById('timer');
+        function clockTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) return '00:00:00';
+            const total = Math.floor(seconds);
+            const hours = Math.floor(total / 3600);
+            const minutes = Math.floor(total % 3600 / 60);
+            const secs = total % 60;
+            return [hours, minutes, secs].map(n => String(n).padStart(2, '0')).join(':');
+        }
+        function updatePlaybackTime() {
+            if (!clock || player.srcObject || !(player.getAttribute('src') || player.currentSrc)) return;
+            const current = clockTime(player.currentTime);
+            const duration = clockTime(player.duration);
+            clock.textContent = current + ' / ' + duration;
+        }
+        function updatePreview() {
+            updatePlaceholder();
+            updatePlaybackTime();
+        }
+        ['loadedmetadata', 'loadeddata', 'emptied', 'abort', 'error', 'playing',
+            'durationchange', 'timeupdate', 'seeking', 'seeked'].forEach(
+            e => player.addEventListener(e, updatePreview)
+        );
+        new MutationObserver(updatePreview).observe(player, {attributes:true, attributeFilter:['src']});
+        updatePreview();
         window.btUpdateIdlePreview = updatePlaceholder;
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',init);

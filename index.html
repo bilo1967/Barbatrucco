@@ -209,13 +209,13 @@
         text-align: center;
       }
     </style>
-    <link href="css/recorder-theme.css?v=1.11" rel="stylesheet" />
+    <link href="css/recorder-theme.css?v=1.12" rel="stylesheet" />
     <!-- Modulo per il caricamento di FFmpeg.WASM -->
     <script src="js/loadFFmpeg.js" type="module"></script>
     <script src="js/mediapipe-selfie.js?v=3.0"></script>
     <script src="js/webcam-pip.js?v=3.1"></script>
     <script src="js/device-settings.js?v=1.1" defer></script>
-    <script src="js/recorder-appearance.js?v=1.1" defer></script>
+    <script src="js/recorder-appearance.js?v=1.2" defer></script>
     <script src="js/i18n.js?v=4.2"></script>
     <script src="js/audio-mixer.js?v=1.0"></script>
     <script src="js/barbatrucco.js?v=3.2"></script>
@@ -318,12 +318,12 @@
                 </div>
               </div>
               <div class="bt-mixer-area">
-                <button type="button" class="bt-mixer-button" id="bt-mixer-toggle" aria-expanded="false" aria-controls="bt-mixer-panel" data-i18n-title="mixer-title" title="Audio mixer">
-                  <i class="fas fa-sliders-h" aria-hidden="true"></i> <span data-i18n="mixer-title">Audio mixer</span>
+                <button type="button" class="bt-mixer-button" id="bt-mixer-toggle" aria-expanded="false" aria-controls="bt-mixer-panel" data-i18n-title="mixer-title" title="Recording volume">
+                  <i class="fas fa-sliders-h" aria-hidden="true"></i> <span data-i18n="mixer-title">Recording volume</span>
                 </button>
                 <div class="bt-mixer-panel" id="bt-mixer-panel" hidden>
                   <div class="bt-mixer-field">
-                    <label for="bt-gain-source" data-i18n="mixer-source">Source</label>
+                    <label for="bt-gain-source" data-i18n="mixer-source">Original audio</label>
                     <output id="bt-gain-source-value">95%</output>
                     <input type="range" id="bt-gain-source" min="0" max="100" value="95" step="1" />
                   </div>
@@ -422,6 +422,9 @@
                       <b>Voice-over:</b> enable <b>Voice-over</b> and hold the button or the space bar while speaking to reduce the original audio level in the recording.
                     </p>
                     <p>
+                      <b>Recording volume:</b> open the volume controls below the recording options to adjust the original audio and microphone separately. The sliders affect the recorded mix, not what you hear while capturing. The two level indicators below the preview help you check that the signals are present and not too loud. If you save a separate microphone track, that file keeps its original volume.
+                    </p>
+                    <p>
                       <b>Webcam:</b> enable <b>Record video</b>, then check <b>Webcam PiP</b> and allow camera access. Drag the camera preview to reposition it, or drag its bottom-right handle to resize it, even while recording.
                     </p>
                     <p>
@@ -435,6 +438,9 @@
                     </p>
                     <p>
                       <b>Voice-over:</b> attiva <b>Voice over</b> e tieni premuto il pulsante o la barra spaziatrice mentre parli per abbassare il volume originale nella registrazione.
+                    </p>
+                    <p>
+                      <b>Volume registrazione:</b> apri i controlli sotto le opzioni per regolare separatamente il volume dell'audio originale e del microfono. Le regolazioni modificano il volume nel file registrato, non quello che ascolti durante l'acquisizione. I due indicatori sotto il video permettono di controllare la presenza e l'intensità del segnale. Se salvi il microfono in una traccia separata, quel file mantiene il volume originale.
                     </p>
                     <p>
                       <b>Webcam:</b> attiva <b>Registra video</b>, seleziona <b>Webcam PiP</b> e autorizza la videocamera. Trascina l’anteprima per spostarla oppure la maniglia in basso a destra per ridimensionarla, anche durante la registrazione.
