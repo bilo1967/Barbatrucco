@@ -1,5 +1,4 @@
-
-
+// Recording options, media constraints, and application state.
 const defaultGain = 0.95; // Guadagno di default
 
 const blobDuration = 250; // gli stream vengono acquisiti a blocchi di 250ms
@@ -74,6 +73,7 @@ var startingRecording = false;
 var conversionQueue = Promise.resolve();
 const downloadURLs = { '#rec-download': null, '#mic-download': null };
 
+// Manage download URLs and recorder controls, releasing previous resources.
 function setDownload(selector, blob, filename) {
     if (downloadURLs[selector]) URL.revokeObjectURL(downloadURLs[selector]);
     const url = URL.createObjectURL(blob);
@@ -143,8 +143,6 @@ async function convertMediaBlob(original, input, format) {
 }
 
 
-
-
 var volumi = {};
 
 
@@ -153,6 +151,7 @@ var volumi = {};
  * @param {number} seconds - Tempo in secondi (può essere NaN o negativo).
  * @returns {string} Tempo formattato ("00:00:00" se input non valido).
  */
+// Time formatting, source tracking, and live audio visualization.
 function formatTime(seconds) {
     if (isNaN(seconds) || seconds < 0) return "00:00:00";
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -210,6 +209,7 @@ function visualizzaStream(stream, tela) {
     draw();
 }
 
+// Lazy initialization of FFmpeg.wasm; conversions run in the browser.
 // Caricamento di FFMPEG.wasm
 let ffmpegLoaded = false;
 
@@ -222,7 +222,7 @@ async function loadFFmpeg() {
         window.ffmpeg = FFMPEG.ffmpeg;
         window.fetchFile = FFMPEG.fetchFile;
         ffmpegLoaded = true;
-/*        
+/*
         // Progress bar
         window.ffmpeg.on('progress', ({ progress, time }) => {
 
@@ -237,12 +237,10 @@ async function loadFFmpeg() {
 }
 
 
-
-
 function showAudioFormat() {
     const activateMic = $('#activate-mic').prop('checked');
     const saveMic = $('#save-mic').prop('checked');
-    
+
     if (soloAudio || saveMic && activateMic) {
         $('#audio-format-selector')
             .removeClass('d-none')
@@ -250,7 +248,7 @@ function showAudioFormat() {
     } else {
         $('#audio-format-selector')
             .removeClass('d-flex')
-            .addClass('d-none');           
+            .addClass('d-none');
     }
 }
 
@@ -268,12 +266,12 @@ function showMicDownload() {
 }
 
 
-
+// Wire UI events, device permissions, recording, playback, and preferences.
 $(document).ready(async function() {
 
     // Carica FFmpeg in background
-    loadFFmpeg(); 
-        
+    loadFFmpeg();
+
     // Il formato di ogni link corrisponde sempre ai byte effettivamente scaricati.
     $("input[name='audio-format']").on('change', async function() {
         audioFormat = $(this).val();
@@ -313,13 +311,13 @@ $(document).ready(async function() {
         soloAudio = !$('#record-video').prop('checked');
         showAudioFormat();
     });
-    
+
     // Gestione spunta salvataggio traccia microfono
     $('#save-mic').on('change', function() {
         showMicDownload();
         showAudioFormat();
     });
-    
+
 
     // Propagazione check inclusione microfono
     $("#activate-mic").on('change', function() {
@@ -331,7 +329,7 @@ $(document).ready(async function() {
             $('#save-mic').removeClass('disabled');
             $('#save-mic').prop('disabled', false);
             $('#save-mic-label').prop('disabled', false);
-            
+
         } else {
             $('#activate-voiceover').addClass('disabled');
             $('#activate-voiceover').prop('disabled', 'disabled');
@@ -423,32 +421,31 @@ $(document).ready(async function() {
 
     microfono = $('#activate-mic').get(0); // Seleziono il primo check di condivisione microfono visto che sono sincronizzati
 
-    
+
     mangiacassette = $('#mangiacassette').get(0); // un elemento di tipo video o audio
 
     grafico = $('#grafico').get(0); // un elemento di tipo canvas
-    
+
     mangiacassette.onkeypress = (event) => {
         event.preventDefault();
         event.stopPropagation();
     };
     mangiacassette.onkeydown = mangiacassette.onkeypress;
-    
+
     mangiacassette.onplaying = () => {
         const stream = mangiacassette.srcObject ||
             (typeof mangiacassette.captureStream === 'function' ? mangiacassette.captureStream() : null);
         visualizzaStream(stream, grafico);
     };
 
-    
+
     timer = new MyChrono(100, function(t) {
         $('#timer').html( ((t/10) + "").toHHMMSS());
     });
-    
-    
-    
+
+
     $('#rec-start').on('click', function() {
-    
+
         bootbox.prompt({
             centerVertical: true,
             title: BTI18n.message('<div>Delayed recording start</div>', '<div>Avvio temporizzato della registrazione</div>'),
@@ -457,34 +454,34 @@ $(document).ready(async function() {
             min: 0,
             value: "0",
             callback: (delay) => {
-            
+
                 bootbox.hideAll();
-            
+
                 if (delay === null) return;
-                
+
                 delay = parseInt(delay);
 
                 avviaRegistrazione( delay ); // Ritardo specificato + durata suono campanella + piccolo extra
             },
         });
     });
-    
-    
-    
+
+
     //$('#rec-start').on('click', async function() {
+    // Acquire selected media, handle the countdown, and build the recording stream.
     async function avviaRegistrazione(ritardo = 0) {
         if (startingRecording || (registratoreTraccia && registratoreTraccia.state !== 'inactive')) return;
         startingRecording = true;
         acquisitionCancelled = false;
         console.log("avvia/interrompi condivisione");
         console.log("Stato condivisione: " + (streamCondivisione ? "attivo" : "non attivo"));
-    
+
         myMimeType = (soloAudio ? AudioMimeType : VideoMimeType);
-        
+
         console.log('solo audio: ' + soloAudio);
 
         let mic = microfono?.checked || false;
-        
+
         try {
 
             if (streamCondivisione?.active) {
@@ -492,9 +489,9 @@ $(document).ready(async function() {
                 interrompiCondivisione();
                 return;
             }
-        
+
             $('#record-video, #activate-webcam').prop('disabled', true);
-            
+
             streamCondivisione = await navigator.mediaDevices.getDisplayMedia(ScreenShareConstraints);
 //          streamMicrofono = (mic === true) ? await navigator.mediaDevices.getUserMedia({ video: false, audio: true }) : null;
 
@@ -522,16 +519,16 @@ $(document).ready(async function() {
             // Conto alla rovescia prima dell'avvio della registrazione
             await new Promise(res => {
                 resolveCountdown = res;
-            
+
                 if (ritardo == 0) {
-                
+
                     res();
 
                 } else {
 
                     // Ticchettio...
                     var remaining = ritardo + 2; // 2 secondi extra per la campanella
-                    
+
                     countdown = window.setInterval(() => {
                         remaining--;
                         if (remaining > 2) {
@@ -539,7 +536,7 @@ $(document).ready(async function() {
                         } else if (remaining == 2) {
                             loadAndPlay("sounds/timeout.wav"); // 2 secondi
                         } else if (remaining <= 0) {
-                            
+
                             window.clearInterval(countdown);
                             countdown = null;
                             res(true);
@@ -547,14 +544,14 @@ $(document).ready(async function() {
                     }, 1000);
                 }
             });
-            
+
             resolveCountdown = null;
             if (acquisitionCancelled || !streamCondivisione?.active) {
                 throw new Error('Registrazione annullata');
             }
             volumi = {};
-            
-            
+
+
             var mergedTracks = null;
             // La composizione mantiene la sorgente schermo originale e sostituisce
             // soltanto la traccia video del file finale.
@@ -566,20 +563,20 @@ $(document).ready(async function() {
             if ($('#activate-mic').prop('checked') && $('#save-mic').prop('checked')) {
                 // Audio microfono separato: merge con un MediaStream vuoto
                 mergedTracks = [
-                    ...videoTracks, 
+                    ...videoTracks,
                     //...streamCondivisione.getAudioTracks(),
                     ...mergeAudioStreams(streamCondivisione, new MediaStream(), volumi),
                 ];
             } else {
                 // Audio microfono separato: merge con streamMicrofono
                 mergedTracks = [
-                    ...videoTracks, 
+                    ...videoTracks,
                     ...mergeAudioStreams(streamCondivisione, streamMicrofono, volumi),
                 ];
             }
 
             streamFinale = new MediaStream(mergedTracks);
-            
+
 
             handleScreenShareStream(streamFinale);
 
@@ -589,8 +586,8 @@ $(document).ready(async function() {
 
             registra(); // Attiva registratori
             startingRecording = false;
-            
-            
+
+
             if (mic) {
                 if ($('#activate-voiceover').prop('checked')) {
                     $('#voiceover').removeClass('disabled');
@@ -611,15 +608,15 @@ $(document).ready(async function() {
             $('#save-mic').addClass('disabled');
             $('#save-mic').prop('disabled', 'disabled');
             $('#save-mic-label').prop('disabled', 'disabled');
-            
+
             // Il ripristino è centralizzato in interrompiCondivisione().
 
         } catch (err) {
-        
+
             console.log("Error", err);
 
             let messaggio = "";
-            
+
             if (countdown) window.clearInterval(countdown);
             countdown = null;
             resolveCountdown = null;
@@ -629,16 +626,16 @@ $(document).ready(async function() {
                 if (!acquisitionCancelled) bootbox.alert(BTI18n.message('Screen sharing was not authorized.', 'Condivisione non autorizzata.'));
                 return;
             }
-            
+
             if ((err.message || '').includes('MediaStream has no audio track') || (err.message || '').includes('No audio tracks in MediaStream')) {
                 messaggio = BTI18n.message('You did not select Share tab audio. If that option is missing, your browser or the selected source may not support audio capture.', 'Non hai selezionato Condividi audio. Se l’opzione non compare, il browser o la sorgente scelta potrebbero non supportare la cattura audio.');
-                
+
             } else if (err.message == "Permission denied") {
-            
+
                 messaggio = "Non hai abilitato la condivisione dello schermo";
 
             }
-            
+
             interrompiCondivisione();
             bootbox.alert(messaggio || BTI18n.message(`Unable to start recording: ${err.message || err}`, `Impossibile avviare la registrazione: ${err.message || err}`));
 
@@ -648,12 +645,12 @@ $(document).ready(async function() {
 
 
     $('#rec-timer-').on('click', function() {
-    
 
-        if (!streamCondivisione /*mangiacassette.srcObject == null*/) { 
+
+        if (!streamCondivisione /*mangiacassette.srcObject == null*/) {
             bootbox.alert(BTI18n.message('No shared screen or tab is active.', 'Non hai ancora attivato una condivisione.'));
             return false;
-        }    
+        }
 
         bootbox.prompt({
             centerVertical: true,
@@ -663,23 +660,23 @@ $(document).ready(async function() {
             min: 1,
             value: 10,
             callback: (v) => {
-            
+
                 if (v == null) return;
-                
+
                 var timeout = null;
-                
+
                 bootbox.alert({
                     centerVertical: true,
                     title: BTI18n.message('Recording is about to start', 'La registrazione sta per partire'),
                     message: BTI18n.message('<p>Switch to the tab you want to record, wait for the bell, and start playback.</p>', '<p>Passa alla scheda da registrare, attendi la campanella e avvia la riproduzione.</p>') + '<div class="w-100 text-center display-4" id="rec-countdown">' + v + '</div>',
                     buttons: {
                         ok: { label: BTI18n.message('Cancel', 'Annulla'), className: 'btn-warning' },
-                    },                    
+                    },
                     callback: () => {
                         if (timeout) window.clearInterval(timeout);
                     }
                 });
-                
+
 
                 (() => {
                     var remaining = v; // Number of seconds
@@ -698,12 +695,13 @@ $(document).ready(async function() {
                         $("#rec-countdown").html(remaining); // Update the value displayed
                     }, 1000); // Decrease counter every second
                 })()
-                
+
             },
         });
     });
-    
-    
+
+
+    // Create the MediaRecorder instances and collect recorded chunks.
     async function registra() {
 
         let frammenti1 = [];
@@ -739,25 +737,24 @@ $(document).ready(async function() {
 
         timer.clear();
         timer.start();
-        
+
         $('#rec-download').removeAttr('href');
         $('#rec-download').removeAttr('download');
         setRecordingControls(true);
     }
 
 
-
     $('#rec-start-').on('click', function() {
-    
-        if (!streamCondivisione /*mangiacassette.srcObject == null*/) { 
+
+        if (!streamCondivisione /*mangiacassette.srcObject == null*/) {
             bootbox.alert(BTI18n.message('No shared screen or tab is active.', 'Non hai ancora attivato una condivisione.'));
             return false;
         }
-        
+
         registra();
-        
+
     });
-   
+
     $('#rec-resume').on('click', function() {
         if (registratoreTraccia?.state !== 'paused') return;
         registratoreTraccia.resume();
@@ -766,7 +763,7 @@ $(document).ready(async function() {
         $('#rec-pause').removeClass('disabled').prop('disabled', false);
         $('#rec-resume').addClass('disabled').prop('disabled', true);
     });
-    
+
     $('#rec-pause').on('click', function() {
         if (registratoreTraccia?.state !== 'recording') return;
         registratoreTraccia.pause();
@@ -778,8 +775,8 @@ $(document).ready(async function() {
 
 
     var spaceBarPressed = false;
-    
-    // Duck 
+
+    // Duck
     $(document).on('keydown', function(event) {
         if (event.which == 32 && !spaceBarPressed) {
             spaceBarPressed = true;
@@ -790,8 +787,8 @@ $(document).ready(async function() {
             $('#voiceover').trigger('mousedown');
         }
     });
-    
-    // Unduck 
+
+    // Unduck
     $(document).on('keyup', function(event) {
         if (event.which == 32 && spaceBarPressed) {
             spaceBarPressed = false;
@@ -802,32 +799,32 @@ $(document).ready(async function() {
             console.log('end voiceover');
         }
     });
-    
-    
+
+
     const ripristinaVolume = () => {
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
             console.log('volume b: '+ volumi.B.gain.value);
-            volumi.A.gain.value = defaultGain; 
+            volumi.A.gain.value = defaultGain;
             volumi.B.gain.value = defaultGain;
         }
-        
+
     };
 
 
-    // Duck 
+    // Duck
     $('#voiceover').on('mousedown', function() {
         $(this).removeClass('btn-warning').addClass('btn-danger');
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
             console.log('volume b: '+ volumi.B.gain.value);
-            volumi.A.gain.value = 0.05; 
+            volumi.A.gain.value = 0.05;
             volumi.B.gain.value = 1.0;
         }
     });
 
 
-    // UnDuck 
+    // UnDuck
     $('#voiceover').on('mouseup', function() {
         $(this).removeClass('btn-danger').addClass('btn-warning');
         ripristinaVolume();
@@ -838,7 +835,6 @@ $(document).ready(async function() {
     });
 
 
-    
     $('#rec-stop').on('click', stopRecording);
 
     function stopRecording() {
@@ -863,6 +859,7 @@ $(document).ready(async function() {
         interrompiCondivisione();
     }
 
+    // Stop capture and release audio resources while preserving webcam preferences.
     function interrompiCondivisione() {
         // Preserve the selected webcam and its preview between recordings.
         // It is released only if the user explicitly unchecks Webcam PiP.
@@ -894,31 +891,31 @@ $(document).ready(async function() {
 
     $('#forza-mono').on('click', function(e){
         e.preventDefault();
-        
+
         if (streamCondivisione) {
             streamCondivisione.getVideoTracks()[0].applyConstraints(
                 {video: { frameRate: 30 }}
             ).then(() => {
-                console.log('qualcosa ho fatto'); 
+                console.log('qualcosa ho fatto');
                 mangiacassette.srcObject = streamFinale;
                 mangiacassette.muted = true;
                 mangiacassette.play();
             }).catch( () => {
-                console.log('qualcosa ho sbagliato...'); 
+                console.log('qualcosa ho sbagliato...');
             });
-            
+
         }
     });
-    
+
     $('#istruzioni-list a').on('click', function (e) {
         e.preventDefault();
         $(this).tab('show');
-    })    
-    
+    })
+
     $('#silenzia-microfono').on('click', function() {
-    
+
         if (!streamMicrofono) return;
-    
+
         if (streamMicrofono.getAudioTracks()[0].enabled) {
             // Mute
             streamMicrofono.getAudioTracks()[0].enabled = false;
@@ -935,9 +932,9 @@ $(document).ready(async function() {
             } else {
                 $('#silenzia-microfono > i').removeClass('fa-microphone-slash').addClass('fa-microphone');
             }
-            
+
         }
-    
+
     });
 
     // Il microfono viene richiesto solo all'avvio effettivo della registrazione.
@@ -947,21 +944,16 @@ $(document).ready(async function() {
         $("#show-help-button").hide();
 
         BTPreferences.set('hide-help', 0);
-        
+
     });
-    
+
     $("#hide-help-button").on('click', function() {
-    
+
         $("#help-box").hide();
         $("#show-help-button").show();
-        
+
         BTPreferences.set('hide-help', 1);
     });
-
-
-
-
-
 
 
     if (BTPreferences.get('record-video') == 1) $('#record-video').prop('checked', true).trigger('change');
@@ -970,16 +962,13 @@ $(document).ready(async function() {
     if (BTPreferences.get('record-mic') == 1) $('#activate-mic').prop('checked', true).trigger('change');
     if (BTPreferences.get('activate-voiceover') == 1) $('#activate-voiceover').prop('checked', true).trigger('change');
     if (BTPreferences.get('save-mic') == 1) $('#save-mic').prop('checked', true).trigger('change');
-    
+
     if (BTPreferences.get('audio-format')) {
         audioFormat = BTPreferences.get('audio-format');
         $("input[name='audio-format']").val( [  audioFormat  ] );
-    } 
-    
-    
-    
+    }
 
-    
+
     // Persist webcam preferences without touching the camera from the preference writer.
     $('#activate-webcam').on('change', function() {
         BTPreferences.set('activate-webcam', this.checked ? 1 : 0);
@@ -1016,20 +1005,21 @@ $(document).ready(async function() {
     });
     $('#save-mic').on('click', function() {
         BTPreferences.set('save-mic', $(this).get(0).checked ? 1 : 0);
-    });    
+    });
 
-   
+
 });
 
 
 // Modificato per garantire un sistema di nodi di gain anche se non c'è la traccia
+// Mix system audio and microphone audio through Web Audio API.
 function mergeAudioStreams(streamA, streamB, gainNodes = null, gain = defaultGain)  {
 
     closeAudioContext(mixingContext);
     const context = new AudioContext();
     mixingContext = context;
     const destination = context.createMediaStreamDestination();
-    
+
     let hasStreamA = false;
     let hasStreamB = false;
 
@@ -1047,7 +1037,7 @@ function mergeAudioStreams(streamA, streamB, gainNodes = null, gain = defaultGai
         hasStreamA = true;
         if (!!gainNodes) gainNodes.A = gainNodeA;
     }
-    
+
     if (streamB && streamB.getAudioTracks().length > 0) {
         const sourceB = context.createMediaStreamSource(streamB);
         const gainNodeB = context.createGain();
@@ -1058,16 +1048,17 @@ function mergeAudioStreams(streamA, streamB, gainNodes = null, gain = defaultGai
     } else {
         const gainNodeB = context.createGain();
         gainNodeB.gain.value = gain;
-        gainNodeB.connect(destination);        
+        gainNodeB.connect(destination);
         hasStreamB = true;
         if (!!gainNodes) gainNodes.B = gainNodeB;
     }
-      
+
     return (hasStreamA || hasStreamB) ? destination.stream.getAudioTracks() : [];
 };
 
 
 // Versione ottimizzata per M4A
+// Output conversions use the in-browser FFmpeg virtual filesystem.
 async function convertToM4A(inputFile) {
     const exitCode = await ffmpeg.exec([
         '-i', inputFile,
@@ -1105,6 +1096,5 @@ async function makeWebMSeekable(inputFile) {
     if (exitCode !== 0) throw new Error(`FFmpeg exited with code ${exitCode}`);
     return 'output.webm';
 }
-
 
 
