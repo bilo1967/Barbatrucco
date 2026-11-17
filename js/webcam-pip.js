@@ -56,14 +56,28 @@ class WebcamPiP {
         try { localStorage.setItem('barbatrucco-webcam-mirror', this.mirrored ? '1' : '0'); } catch (_) {}
     }
     isReady() { return !!this.stream?.getVideoTracks().some(t => t.readyState === 'live'); }
-    async enable() {
-        if (this.isReady()) return;
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 30 } }, audio: false });
+    async enable(deviceId = '', force = false) {
+        // Acquire the replacement before stopping the old camera so a failed
+        // device switch does not discard the working preview.
+        const currentId = this.stream?.getVideoTracks()[0]?.getSettings().deviceId || '';
+        if (this.isReady() && !force && (!deviceId || currentId === deviceId)) return;
+        const video = { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 30 } };
+        if (deviceId) video.deviceId = { exact: deviceId };
+        const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+        const previous = this.stream;
         this.stream = stream;
         this.camera.srcObject = stream;
-        await this.camera.play();
+        try {
+            await this.camera.play();
+        } catch (error) {
+            stream.getTracks().forEach(t => t.stop());
+            this.stream = previous;
+            this.camera.srcObject = previous;
+            throw error;
+        }
+        if (previous) previous.getTracks().forEach(t => t.stop());
         this.showFrame();
-        this.startPreview();
+        if (this.previewRaf === null) this.startPreview();
     }
     disable() {
         this.stopComposition();

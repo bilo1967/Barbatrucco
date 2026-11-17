@@ -90,6 +90,7 @@ function setDownload(selector, blob, filename) {
 }
 
 function setRecordingControls(active) {
+    window.BTDeviceSettings?.setRecording(active);
     $('#rec-start, #rec-timer').toggleClass('disabled', active).prop('disabled', active);
     $('#rec-stop').toggleClass('disabled', !active).prop('disabled', !active);
     $('#rec-pause').toggleClass('disabled', !active).prop('disabled', !active);
@@ -356,7 +357,7 @@ $(document).ready(async function() {
         }
         if (!e.originalEvent || streamMicrofono?.active) return;
         try {
-            micRequest = navigator.mediaDevices.getUserMedia(MicConstraints);
+            micRequest = navigator.mediaDevices.getUserMedia(window.BTDeviceSettings?.micConstraints(MicConstraints) || MicConstraints);
             const stream = await micRequest;
             if (!this.checked) stream.getTracks().forEach(t => t.stop());
             else streamMicrofono = stream;
@@ -370,6 +371,33 @@ $(document).ready(async function() {
     webcamPiP = new WebcamPiP(document.getElementById('rec-preview-stage'),
         document.getElementById('mangiacassette'), document.getElementById('webcam-frame'));
     const webcamInline = document.getElementById('webcam-inline');
+
+    // Device changes are applied before recording; active recordings keep their tracks.
+    if (window.BTDeviceSettings) {
+        BTDeviceSettings.onDeviceLost = async (kind) => {
+            if (registratoreTraccia?.state === 'recording' || startingRecording) return;
+            try {
+                await BTDeviceSettings.onInputChanged?.(kind);
+            } catch (error) {
+                console.warn('Unable to recover disconnected device:', error);
+                const selector = kind === 'videoinput' ? '#activate-webcam' : '#activate-mic';
+                if ($(selector).prop('checked')) $(selector).prop('checked', false).trigger('change');
+            }
+        };
+        BTDeviceSettings.onInputChanged = async (kind) => {
+            if (kind === 'audioinput' && $('#activate-mic').prop('checked') && streamMicrofono?.active) {
+                const replacement = await navigator.mediaDevices.getUserMedia(BTDeviceSettings.micConstraints(MicConstraints));
+                const previous = streamMicrofono;
+                streamMicrofono = replacement;
+                previous.getTracks().forEach(track => track.stop());
+            }
+            if (kind === 'videoinput' && $('#activate-webcam').prop('checked') && webcamPiP?.isReady()) {
+                await webcamPiP.enable(BTDeviceSettings.selected('videoinput'), true);
+                webcamInline.srcObject = webcamPiP.stream;
+                webcamInline.play().catch(() => {});
+            }
+        };
+    }
     $('#activate-webcam').on('change', async function() {
         if (!this.checked) {
             webcamPiP.disable();
@@ -380,7 +408,7 @@ $(document).ready(async function() {
         // Picture-in-picture is a video-only feature.
         $('#record-video').prop('checked', true).trigger('change');
         try {
-            cameraRequest = webcamPiP.enable();
+            cameraRequest = webcamPiP.enable(window.BTDeviceSettings?.selected('videoinput'));
             await cameraRequest;
             if (!this.checked) { webcamPiP.disable(); return; }
             webcamInline.srcObject = webcamPiP.stream;
@@ -498,11 +526,11 @@ $(document).ready(async function() {
             if (mic) {
                 if (micRequest) await micRequest;
                 if (!microfono.checked) throw new Error(BTI18n.message('Microphone access denied', 'Accesso al microfono non autorizzato'));
-                if (!streamMicrofono?.active) streamMicrofono = await navigator.mediaDevices.getUserMedia(MicConstraints);
+                if (!streamMicrofono?.active) streamMicrofono = await navigator.mediaDevices.getUserMedia(window.BTDeviceSettings?.micConstraints(MicConstraints) || MicConstraints);
             }
             if ($('#activate-webcam').prop('checked')) {
                 if (cameraRequest) await cameraRequest;
-                if (!webcamPiP.isReady()) await webcamPiP.enable();
+                if (!webcamPiP.isReady()) await webcamPiP.enable(window.BTDeviceSettings?.selected('videoinput'));
             }
             if (!streamCondivisione.getAudioTracks().length) {
                 throw new Error('MediaStream has no audio track');
@@ -873,6 +901,7 @@ $(document).ready(async function() {
         streamMicrofono = null;
         streamFinale = null;
         startingRecording = false;
+        window.BTDeviceSettings?.setRecording(false);
         mangiacassette.srcObject = null;
         window.btUpdateIdlePreview?.();
         stopVisualization();

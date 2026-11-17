@@ -1202,3 +1202,69 @@ html[data-rec-theme="light"] #grafico {
 #rec-preview-stage.playback-media #webcam-frame {
     display: none !important;
 }
+
+/* Device selector, integrated with the recorder caption and both themes. */
+#ui-devices-toggle {
+    display: inline-flex;
+    flex: 0 0 29px;
+    align-items: center;
+    justify-content: center;
+    width: 29px;
+    height: 29px;
+    padding: 0;
+    border: 1px solid #445771;
+    border-radius: 7px;
+    color: var(--ui-text);
+    background: #24364d;
+    cursor: pointer;
+}
+#ui-devices-toggle:hover, #ui-devices-toggle[aria-expanded="true"],
+.bt-device-refresh:hover { border-color: var(--ui-accent); }
+#ui-devices-toggle:focus-visible, .bt-device-refresh:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+.bt-device-panel {
+    text-align: left;
+    margin: 0 0 12px;
+    padding: 13px 15px;
+    border: 1px solid #445771;
+    border-radius: 9px;
+    background: #1b2a3d;
+    color: var(--ui-text);
+}
+.bt-device-panel[hidden] { display: none !important; }
+.bt-device-panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.bt-device-refresh {
+    border: 1px solid #445771;
+    border-radius: 6px;
+    color: inherit;
+    background: transparent;
+    width: 29px;
+    height: 29px;
+    cursor: pointer;
+}
+.bt-device-fields { display: grid; grid-template-columns: minmax(95px, 1fr) minmax(0, 3fr); gap: 8px 12px; align-items: center; }
+.bt-device-fields label { margin: 0; font-size: 12px; }
+.bt-device-fields select { min-width: 0; width: 100%; height: 29px; }
+.bt-device-fields select:disabled { opacity: .65; }
+.bt-device-note { font-size: 11px; opacity: .75; margin-top: 10px; }
+.bt-device-status { font-size: 12px; margin-top: 6px; min-height: 0; }
+.bt-device-status:empty { display: none; }
+html[data-rec-theme="light"] #ui-devices-toggle,
+html[data-rec-theme="light"] .bt-device-panel,
+html[data-rec-theme="light"] .bt-device-refresh {
+    background: #fff;
+    border-color: #b9c8da;
+    color: #25384e;
+}
+html[data-rec-theme="light"] .bt-device-panel { background: #f5f8fc; }
+@media(max-width: 480px) {
+    .bt-device-fields { grid-template-columns: 1fr; gap: 3px; }
+    .bt-device-fields label:not(:first-child) { margin-top: 7px; }
+}

@@ -5,6 +5,15 @@ const BTPreferences = {
   set(key, value) { try { localStorage.setItem(BT_STORE_PREFIX + key, String(value)); } catch (_) {} }
 };
 const BTLanguages = {
+  "device-settings-title": ["Device settings", "Dispositivi"],
+  "device-refresh": ["Refresh device list", "Aggiorna elenco dispositivi"],
+  "device-microphone": ["Microphone", "Microfono"],
+  "device-webcam": ["Webcam", "Webcam"],
+  "device-output": ["Playback output", "Uscita riproduzione"],
+  "device-note": [
+    "Device names may appear after granting permission. Output selection controls playback only.",
+    "I nomi dei dispositivi possono comparire dopo l'autorizzazione. L'uscita selezionata riguarda solo la riproduzione."
+  ],
   "record-video-label": [
     "Record video",
     "Registra video"
