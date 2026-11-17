@@ -385,13 +385,13 @@ $(document).ready(async function() {
             }
         };
         BTDeviceSettings.onInputChanged = async (kind) => {
-            if (kind === 'audioinput' && $('#activate-mic').prop('checked') && streamMicrofono?.active) {
+            if (kind === 'audioinput' && $('#activate-mic').prop('checked') && streamMicrofono) {
                 const replacement = await navigator.mediaDevices.getUserMedia(BTDeviceSettings.micConstraints(MicConstraints));
                 const previous = streamMicrofono;
                 streamMicrofono = replacement;
                 previous.getTracks().forEach(track => track.stop());
             }
-            if (kind === 'videoinput' && $('#activate-webcam').prop('checked') && webcamPiP?.isReady()) {
+            if (kind === 'videoinput' && $('#activate-webcam').prop('checked') && webcamPiP?.stream) {
                 await webcamPiP.enable(BTDeviceSettings.selected('videoinput'), true);
                 webcamInline.srcObject = webcamPiP.stream;
                 webcamInline.play().catch(() => {});
@@ -500,6 +500,7 @@ $(document).ready(async function() {
     async function avviaRegistrazione(ritardo = 0) {
         if (startingRecording || (registratoreTraccia && registratoreTraccia.state !== 'inactive')) return;
         startingRecording = true;
+        window.BTDeviceSettings?.setRecording(true);
         acquisitionCancelled = false;
         console.log("avvia/interrompi condivisione");
         console.log("Stato condivisione: " + (streamCondivisione ? "attivo" : "non attivo"));
