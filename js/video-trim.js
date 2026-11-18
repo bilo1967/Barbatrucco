@@ -52,8 +52,11 @@
 
     function sync() {
         if (!startInput || !endInput || !startRange || !endRange) return;
-        startInput.value = stamp(start);
-        endInput.value = stamp(end);
+        startInput.value = start.toFixed(1);
+        endInput.value = end.toFixed(1);
+        startInput.max = String(Math.max(0, end - 0.1));
+        endInput.min = String(Math.min(duration, start + 0.1));
+        endInput.max = String(duration);
         startRange.max = String(duration);
         endRange.max = String(duration);
         startRange.value = String(start);
@@ -122,7 +125,12 @@
         button.className = 'btn btn-sm bt-trim-btn ' + (extraClass || 'btn-outline-secondary');
         button.title = title;
         button.setAttribute('aria-label', title);
-        button.innerHTML = '<i class="bi bi-' + icon + '" aria-hidden="true"></i>';
+        button.innerHTML = icon === 'bar-arrow-right-custom'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
+              '<path d="M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>' +
+              '<path fill-rule="evenodd" transform="translate(12 0) scale(-1 1)" d="M10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5"/>' +
+              '</svg>'
+            : '<i class="bi bi-' + icon + '" aria-hidden="true"></i>';
         button.addEventListener('click', handler);
         parent.appendChild(button);
         return button;
@@ -140,27 +148,25 @@
 
     function makeTimeField(parent, which) {
         const field = document.createElement('input');
-        field.type = 'text';
+        field.type = 'number';
         field.className = 'form-control form-control-sm bt-trim-time';
+        field.min = '0';
+        field.step = '0.1';
         field.inputMode = 'decimal';
-        field.spellcheck = false;
-        field.setAttribute('aria-label', which === 'start' ? label('Start', 'Inizio') : label('End', 'Fine'));
-        field.title = label('Time (mm:ss.s)', 'Tempo (mm:ss.s)');
-        const commit = () => {
-            const n = parseTime(field.value);
-            if (!Number.isFinite(n)) { sync(); return; }
+        field.setAttribute('aria-label', which === 'start' ? label('Start (seconds)', 'Inizio (secondi)') : label('End (seconds)', 'Fine (secondi)'));
+        field.title = label('Time in seconds (0.1 s steps)', 'Tempo in secondi (passi di 0,1 s)');
+        field.addEventListener('change', () => {
+            const n = Number(field.value);
+            if (field.value.trim() === '' || !Number.isFinite(n)) { sync(); return; }
             update(which, Math.round(n * 10) / 10, true);
-        };
-        field.addEventListener('change', commit);
-        field.addEventListener('keydown', e => {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                e.preventDefault();
-                update(which, (which === 'start' ? start : end) + (e.key === 'ArrowUp' ? 0.1 : -0.1), true);
-            } else if (e.key === 'Enter') {
-                commit();
-                field.blur();
-            }
         });
+        field.addEventListener('input', () => {
+            // Native number spinner also emits input, including while its arrows are held.
+            const n = Number(field.value);
+            if (field.value.trim() !== '' && Number.isFinite(n))
+                update(which, Math.round(n * 10) / 10, false);
+        });
+        field.addEventListener('blur', () => sync());
         const box = document.createElement('div');
         box.className = 'bt-trim-field';
         box.appendChild(field);
@@ -228,7 +234,7 @@
             #bt-trim-panel .bt-trim-apply { width: 31px; min-width: 31px; }
             .bt-trim-field { flex: 0 0 auto; border: 1px solid var(--ui-stroke);
                 border-radius: 5px; padding: 2px; }
-            #bt-trim-panel .bt-trim-time { width: 57px; height: 23px; padding: 2px 1px;
+            #bt-trim-panel .bt-trim-time { width: 73px; height: 23px; padding: 2px 1px;
                 text-align: center; font-size: 10.5px; border: 0; box-shadow: none !important;
                 font-variant-numeric: tabular-nums; background: transparent; color: var(--ui-text); }
             .bt-trim-dual { flex: 1 1 auto; min-width: 170px; height: 26px;
@@ -314,7 +320,7 @@
 
         const row = document.createElement('div');
         row.className = 'bt-trim-row';
-        addButton(row, 'play-fill',
+        addButton(row, 'arrow-bar-right',
             label('Play 2 seconds from start', 'Riproduci 2 secondi dall’inizio'),
             () => playSection(start, Math.min(end, start + 2)), 'btn-outline-primary');
         startInput = makeTimeField(row, 'start');
@@ -338,7 +344,7 @@
         row.appendChild(dual);
 
         endInput = makeTimeField(row, 'end');
-        addButton(row, 'play-fill',
+        addButton(row, 'bar-arrow-right-custom',
             label('Play 2 seconds before end', 'Riproduci i 2 secondi prima della fine'),
             () => playSection(Math.max(start, end - 2), end), 'btn-outline-primary');
         controls.appendChild(row);
@@ -351,10 +357,7 @@
 
         const actions = document.createElement('div');
         actions.className = 'bt-trim-actions';
-        addButton(actions, 'arrow-counterclockwise',
-            label('Reset selection', 'Ripristina selezione'),
-            () => { start = 0; end = duration; sync(); }, 'btn-outline-secondary');
-        applyButton = addButton(actions, 'scissors',
+        applyButton = addButton(actions, 'check-lg',
             label('Apply trim', 'Applica taglio'), apply, 'btn-primary bt-trim-apply');
         panel.appendChild(actions);
         wrapper.appendChild(panel);
