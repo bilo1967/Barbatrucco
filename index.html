@@ -193,16 +193,17 @@
         text-align: center;
       }
     </style>
-    <link href="css/recorder-theme.css?v=2.0" rel="stylesheet" />
+    <link href="css/recorder-theme.css?v=2.1" rel="stylesheet" />
     <!-- Modulo per il caricamento di FFmpeg.WASM -->
     <script src="js/loadFFmpeg.js" type="module"></script>
     <script src="js/mediapipe-selfie.js?v=4.0"></script>
     <script src="js/webcam-pip.js?v=3.1"></script>
-    <script src="js/device-settings.js?v=2.0" defer></script>
+    <script src="js/device-settings.js?v=2.1" defer></script>
     <script src="js/recorder-appearance.js?v=2.0" defer></script>
-    <script src="js/i18n.js?v=4.2"></script>
-    <script src="js/audio-mixer.js?v=1.0"></script>
-    <script src="js/barbatrucco.js?v=4.0"></script>
+    <script src="js/i18n.js?v=4.3"></script>
+    <script src="js/audio-mixer.js?v=2.0"></script>
+    <script src="js/headphone-monitor.js?v=1.0"></script>
+    <script src="js/barbatrucco.js?v=4.1"></script>
   </head>
   <body>
     <!-- begin: container -->
@@ -302,10 +303,11 @@
                 </div>
               </div>
               <div class="bt-mixer-area">
-                <button type="button" class="bt-mixer-button" id="bt-mixer-toggle" aria-expanded="false" aria-controls="bt-mixer-panel" data-i18n-title="mixer-title" title="Recording volume">
-                  <i class="bi bi-sliders" aria-hidden="true"></i> <span data-i18n="mixer-title">Recording volume</span>
+                <button type="button" class="bt-mixer-button" id="bt-mixer-toggle" aria-expanded="false" aria-controls="bt-mixer-panel" data-i18n-title="mixer-title" title="Volume settings">
+                  <i class="bi bi-sliders" aria-hidden="true"></i> <span data-i18n="mixer-title">Volume settings</span>
                 </button>
                 <div class="bt-mixer-panel" id="bt-mixer-panel" hidden>
+                  <div class="bt-mixer-section-title" data-i18n="mixer-recording-section">Recording volumes</div>
                   <div class="bt-mixer-field">
                     <label for="bt-gain-source" data-i18n="mixer-source">Original audio</label>
                     <output id="bt-gain-source-value">95%</output>
@@ -317,6 +319,19 @@
                     <input type="range" id="bt-gain-mic" min="0" max="100" value="95" step="1" />
                   </div>
                   <p class="bt-mixer-note" data-i18n="mixer-note">The separate microphone track remains unprocessed.</p>
+                  <div class="bt-mixer-section-title" data-i18n="mixer-duck-section">Floor attenuation during voice-over</div>
+                  <div class="bt-mixer-field">
+                    <label for="bt-gain-duck-record" data-i18n="mixer-duck-record">Floor volume in recording</label>
+                    <output id="bt-gain-duck-record-value">5%</output>
+                    <input type="range" id="bt-gain-duck-record" min="0" max="100" value="5" step="1" />
+                  </div>
+                  <div class="bt-mixer-field">
+                    <label for="bt-gain-duck-headphones" data-i18n="mixer-duck-headphones">Floor volume in headphones</label>
+                    <output id="bt-gain-duck-headphones-value">100%</output>
+                    <input type="range" id="bt-gain-duck-headphones" min="0" max="100" value="100" step="1" />
+                  </div>
+                  <p class="bt-mixer-note" data-i18n="mixer-headphones-note">Headphone control requires a new tab-audio capture in a supported browser. System audio is not affected.</p>
+                  <div id="bt-headphones-status" class="bt-mixer-status" role="status" aria-live="polite"></div>
                   <button type="button" id="bt-gain-reset" class="bt-mixer-reset" data-i18n="mixer-reset">Reset</button>
                 </div>
               </div>
@@ -406,7 +421,7 @@
                       <b>Voice-over:</b> enable <b>Voice-over</b> and hold the button or the space bar while speaking to reduce the original audio level in the recording.
                     </p>
                     <p>
-                      <b>Recording volume:</b> open the volume controls below the recording options to adjust the original audio and microphone separately. The sliders affect the recorded mix, not what you hear while capturing. The two level indicators below the preview help you check that the signals are present and not too loud. If you save a separate microphone track, that file keeps its original volume.
+                      <b>Volume settings:</b> the recording controls adjust the original audio and microphone independently in the recorded mix. The two meters below the preview help check signal levels. During voice-over, <b>Floor volume in recording</b> sets how much original audio remains in the recording (5% by default). <b>Floor volume in headphones</b> optionally reduces what you hear while speaking (100% by default, unchanged). Headphone control requires a compatible Chromium browser and a new recording with tab audio selected; it does not affect system audio. A separate microphone file is saved without volume changes.
                     </p>
                     <p>
                       <b>Webcam:</b> enable <b>Record video</b>, then check <b>Webcam PiP</b> and allow camera access. Drag the camera preview to reposition it, or drag its bottom-right handle to resize it, even while recording.
@@ -424,7 +439,7 @@
                       <b>Voice-over:</b> attiva <b>Voice over</b> e tieni premuto il pulsante o la barra spaziatrice mentre parli per abbassare il volume originale nella registrazione.
                     </p>
                     <p>
-                      <b>Volume registrazione:</b> apri i controlli sotto le opzioni per regolare separatamente il volume dell'audio originale e del microfono. Le regolazioni modificano il volume nel file registrato, non quello che ascolti durante l'acquisizione. I due indicatori sotto il video permettono di controllare la presenza e l'intensità del segnale. Se salvi il microfono in una traccia separata, quel file mantiene il volume originale.
+                      <b>Impostazioni volume:</b> i volumi di registrazione regolano separatamente l'audio originale e il microfono nel file registrato. I due indicatori sotto il video aiutano a controllare i livelli. Durante il voice-over, <b>Volume floor nella registrazione</b> stabilisce quanto audio originale rimane nel file (5% per impostazione predefinita). <b>Volume floor in cuffia</b> permette di ridurre anche quello che ascolti mentre parli (100% per impostazione predefinita, quindi invariato). Il controllo in cuffia richiede Chromium compatibile e una nuova acquisizione dell'audio di una scheda: non modifica l'audio di sistema. La traccia microfono separata conserva il volume originale.
                     </p>
                     <p>
                       <b>Webcam:</b> attiva <b>Registra video</b>, seleziona <b>Webcam PiP</b> e autorizza la videocamera. Trascina l’anteprima per spostarla oppure la maniglia in basso a destra per ridimensionarla, anche durante la registrazione.

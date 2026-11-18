@@ -17,7 +17,15 @@ const BTLanguages = {
   "audio-levels": ["Audio levels", "Livelli audio"],
   "meter-source": ["Source", "Sorgente"],
   "meter-mic": ["Mic", "Mic"],
-  "mixer-title": ["Recording volume", "Volume registrazione"],
+  "mixer-title": ["Volume settings", "Impostazioni volume"],
+  "mixer-recording-section": ["Recording volumes", "Volumi di registrazione"],
+  "mixer-duck-section": ["Floor attenuation during voice-over", "Attenuazione floor nel voice-over"],
+  "mixer-duck-record": ["Floor volume in recording", "Volume floor nella registrazione"],
+  "mixer-duck-headphones": ["Floor volume in headphones", "Volume floor in cuffia"],
+  "mixer-headphones-note": [
+    "Headphone control requires a new tab-audio capture in a supported browser. System audio is not affected.",
+    "Il volume in cuffia richiede una nuova acquisizione audio di una scheda con un browser compatibile. L'audio di sistema non viene modificato."
+  ],
   "mixer-source": ["Original audio", "Audio originale"],
   "mixer-mic": ["Microphone", "Microfono"],
   "mixer-note": ["The separate microphone track remains unprocessed.", "La traccia microfono separata rimane originale."],

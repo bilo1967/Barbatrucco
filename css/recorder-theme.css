@@ -1364,3 +1364,23 @@ html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-sel
     border-color: var(--ui-accent);
     box-shadow: 0 0 0 2px #69baff33;
 }
+
+/* Voice-over controls: two sections in a scroll-safe compact popover. */
+.bt-mixer-panel {
+    width: 232px;
+    max-height: min(75vh, 480px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.bt-mixer-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 9px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--ui-stroke);
+}
+.bt-mixer-section-title:not(:first-child) { margin-top: 12px; }
+.bt-mixer-field label { line-height: 1.25; }
+.bt-mixer-status { font-size: 10px; line-height: 1.35; margin-bottom: 7px; color: var(--ui-muted); }
+.bt-mixer-status:empty { display: none; }
