@@ -10,7 +10,7 @@
     let previewing = false;
     let busy = false;
     let initialized = false;
-    let player, panel, toggle, startInput, endInput, lengthOutput, positionOutput, status, applyButton;
+    let player, panel, toggle, startInput, endInput, lengthOutput, positionOutput, status, applyButton, playButton;
     const epsilon = 0.002;
 
     function label(en, it) {
@@ -77,70 +77,143 @@
         }
     }
 
-    function addButton(parent, text, title, callback, className) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = className || 'btn btn-sm btn-outline-secondary';
-        b.textContent = text;
-        b.title = title;
-        b.addEventListener('click', callback);
-        parent.appendChild(b);
-        return b;
+    function addButton(parent, icon, title, callback, className, text) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className || 'btn btn-sm btn-outline-secondary bt-trim-btn';
+        button.title = title;
+        button.setAttribute('aria-label', title);
+        button.innerHTML = icon ? '<i class="bi bi-' + icon + '" aria-hidden="true"></i>' : '';
+        if (text) button.appendChild(document.createTextNode(text));
+        button.addEventListener('click', callback);
+        parent.appendChild(button);
+        return button;
     }
 
     function makeField(parent, kind) {
+        const isStart = kind === 'start';
         const group = document.createElement('div');
-        group.className = 'col-12 col-md-6';
-        const row = document.createElement('div');
-        row.className = 'd-flex align-items-center gap-1 flex-wrap';
+        group.className = 'bt-trim-group';
         const fieldLabel = document.createElement('label');
-        fieldLabel.className = 'form-label small mb-1 d-block';
-        fieldLabel.textContent = kind === 'start' ? label('Start', 'Inizio') : label('End', 'Fine');
+        fieldLabel.className = 'bt-trim-label';
+        fieldLabel.textContent = isStart ? label('Start', 'Inizio') : label('End', 'Fine');
+        group.appendChild(fieldLabel);
+
+        const row = document.createElement('div');
+        row.className = 'bt-trim-group-row';
+        if (isStart) {
+            addButton(row, 'skip-start',
+                label('Go to selection start', 'Vai all’inizio della selezione'),
+                () => seekTo(start));
+        }
+        addButton(row, 'dash', label('Back 0.1 s', 'Indietro di 0,1 s'), () => {
+            input.value = precise(Number(input.value) - 0.1);
+            updateFromField(kind);
+        });
         const input = document.createElement('input');
         input.type = 'number';
         input.min = '0';
         input.step = '0.1';
         input.className = 'form-control form-control-sm bt-trim-time';
-        input.style.width = '8rem';
-        input.style.fontVariantNumeric = 'tabular-nums';
         input.setAttribute('aria-label', fieldLabel.textContent);
         input.addEventListener('change', () => updateFromField(kind));
-        addButton(row, '-', label('Back 0.1 s', 'Indietro di 0,1 s'), () => {
-            input.value = precise(Number(input.value) - 0.1);
-            updateFromField(kind);
-        });
         row.appendChild(input);
-        addButton(row, '+', label('Forward 0.1 s', 'Avanti di 0,1 s'), () => {
+        addButton(row, 'plus', label('Forward 0.1 s', 'Avanti di 0,1 s'), () => {
             input.value = precise(Number(input.value) + 0.1);
             updateFromField(kind);
         });
-        addButton(row, kind === 'start' ? '|◀' : '▶|',
-            label('Seek to this position', 'Vai a questa posizione'), () => {
-                seekTo(kind === 'start' ? start : end);
-            });
-        addButton(row, '●', label('Set to current playback position', 'Imposta alla posizione corrente'), () => {
-            const current = Number(player.currentTime);
-            if (kind === 'start') start = Math.max(0, Math.min(current, end - 0.1));
-            else end = Math.min(duration, Math.max(current, start + 0.1));
-            sync();
-        });
-        group.appendChild(fieldLabel);
+        if (!isStart) {
+            addButton(row, 'skip-end',
+                label('Go to selection end', 'Vai alla fine della selezione'),
+                () => seekTo(end));
+        }
+        addButton(row, 'pin-angle-fill',
+            label('Set to current position', 'Imposta alla posizione corrente'),
+            () => {
+                const current = Number(player.currentTime);
+                if (!Number.isFinite(current)) return;
+                if (isStart) start = Math.max(0, Math.min(current, end - 0.1));
+                else end = Math.min(duration, Math.max(current, start + 0.1));
+                sync();
+            }, 'btn btn-sm btn-primary bt-trim-btn bt-trim-pin');
+
         group.appendChild(row);
         parent.appendChild(group);
         return input;
     }
 
+    function updatePlayButton() {
+        if (!playButton) return;
+        const playing = !player.paused && previewing;
+        const title = playing ? label('Stop preview', 'Ferma anteprima')
+            : label('Play selection', 'Riproduci selezione');
+        playButton.title = title;
+        playButton.setAttribute('aria-label', title);
+        playButton.innerHTML = '<i class="bi bi-' + (playing ? 'stop-fill' : 'play-fill') + '" aria-hidden="true"></i>';
+    }
+
+    function injectStyle() {
+        const style = document.createElement('style');
+        style.id = 'bt-video-trim-style';
+        style.textContent = `
+            .bt-trim-container { width: 100%; margin-top: 4px; text-align: left; }
+            #bt-trim-panel[hidden], #bt-trim-toggle[hidden] { display: none !important; }
+            #bt-trim-toggle { width: 34px; min-width: 34px; padding: 5px 7px; }
+            #bt-trim-panel {
+                padding: 8px 10px; border: 1px solid var(--ui-stroke);
+                border-radius: 7px; background: var(--ui-card); color: var(--ui-text);
+            }
+            .bt-trim-top { display: flex; justify-content: center; align-items: end; flex-wrap: wrap; gap: 7px; }
+            .bt-trim-group { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+            .bt-trim-label { font-size: 11px; color: var(--ui-muted); line-height: 1.1; }
+            .bt-trim-group-row { display: flex; align-items: center; gap: 3px; }
+            #bt-trim-panel .bt-trim-btn {
+                flex: 0 0 auto; min-width: 25px; width: 25px; height: 27px;
+                padding: 2px 3px; font-size: 13px; line-height: 1;
+                border-radius: 5px; margin: 0; display: inline-flex;
+                align-items: center; justify-content: center;
+            }
+            #bt-trim-panel .bt-trim-pin { min-width: 28px; width: 28px; font-size: 15px; }
+            #bt-trim-panel .bt-trim-play {
+                min-width: 32px; width: 32px; height: 32px;
+                align-self: end; margin-bottom: 0; font-size: 17px;
+            }
+            #bt-trim-panel .bt-trim-time {
+                width: 81px; min-width: 0; height: 27px; padding: 2px 4px;
+                font-size: 12px; text-align: center; font-variant-numeric: tabular-nums;
+                border-radius: 5px; appearance: textfield; -moz-appearance: textfield;
+            }
+            #bt-trim-panel .bt-trim-time::-webkit-inner-spin-button,
+            #bt-trim-panel .bt-trim-time::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+            .bt-trim-bottom { margin-top: 7px; display: flex; align-items: center;
+                justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+            .bt-trim-summary { font-size: 11px; color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+            .bt-trim-actions { display: flex; gap: 4px; align-items: center; }
+            #bt-trim-panel .bt-trim-reset { font-size: 17px; width: 28px; height: 27px; }
+            #bt-trim-panel .bt-trim-apply { width: auto; min-width: 85px; height: 27px;
+                gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+            #bt-trim-status:empty { display: none; }
+            #bt-trim-status { font-size: 11px; margin-top: 4px; }
+            @media(max-width: 620px) {
+                .bt-trim-top { justify-content: center; gap: 6px; }
+                .bt-trim-group-row { gap: 2px; }
+                #bt-trim-panel .bt-trim-time { width: 70px; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     function buildUI() {
         if (initialized) return;
-        initialized = true;
         player = document.getElementById('mangiacassette');
-        const stage = document.getElementById('rec-preview-stage');
-        if (!player || !stage) return;
+        const controlStrip = document.querySelector('.recorder-button-strip');
+        const controlRow = document.querySelector('.recorder-controls-row');
+        if (!player || !controlStrip || !controlRow) return;
+        initialized = true;
+        injectStyle();
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'bt-trim-container text-start mt-2';
-        toggle = addButton(wrapper, '✂ ' + label('Trim video', 'Taglia video'),
-            label('Trim recording', 'Taglia la registrazione'), () => {
+        toggle = addButton(controlStrip, 'scissors',
+            label('Trim video', 'Taglia video'), () => {
                 panel.hidden = !panel.hidden;
                 toggle.setAttribute('aria-expanded', String(!panel.hidden));
                 if (!panel.hidden) sync();
@@ -148,52 +221,63 @@
         toggle.id = 'bt-trim-toggle';
         toggle.hidden = true;
         toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-controls', 'bt-trim-panel');
 
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bt-trim-container';
         panel = document.createElement('div');
         panel.id = 'bt-trim-panel';
-        panel.className = 'border rounded p-2 mt-2';
         panel.hidden = true;
-        const heading = document.createElement('div');
-        heading.className = 'small mb-2';
-        heading.textContent = label('Select the portion to keep', 'Seleziona la porzione da conservare');
-        panel.appendChild(heading);
 
-        const fields = document.createElement('div');
-        fields.className = 'row g-2';
-        startInput = makeField(fields, 'start');
-        endInput = makeField(fields, 'end');
-        panel.appendChild(fields);
+        const top = document.createElement('div');
+        top.className = 'bt-trim-top';
+        startInput = makeField(top, 'start');
+        playButton = addButton(top, 'play-fill',
+            label('Play selection', 'Riproduci selezione'), async () => {
+                if (previewing && !player.paused) {
+                    player.pause();
+                    previewing = false;
+                    updatePlayButton();
+                } else {
+                    await seekAndPlay(start);
+                    updatePlayButton();
+                }
+            }, 'btn btn-sm btn-outline-primary bt-trim-btn bt-trim-play');
+        endInput = makeField(top, 'end');
+        panel.appendChild(top);
 
+        const bottom = document.createElement('div');
+        bottom.className = 'bt-trim-bottom';
         const summary = document.createElement('div');
-        summary.className = 'small mt-2';
-        summary.appendChild(document.createTextNode(label('Result duration: ', 'Durata risultante: ')));
+        summary.className = 'bt-trim-summary';
+        summary.appendChild(document.createTextNode(label('Duration: ', 'Durata: ')));
         lengthOutput = document.createElement('strong');
         summary.appendChild(lengthOutput);
-        summary.appendChild(document.createTextNode(' · ' + label('Position: ', 'Posizione: ')));
+        summary.appendChild(document.createTextNode('  ·  ' + label('Position: ', 'Posizione: ')));
         positionOutput = document.createElement('span');
         summary.appendChild(positionOutput);
-        panel.appendChild(summary);
+        bottom.appendChild(summary);
 
-        const buttons = document.createElement('div');
-        buttons.className = 'd-flex flex-wrap gap-1 mt-2';
-        addButton(buttons, '|◀', label('Go to start', 'Vai all’inizio'), () => seekTo(start));
-        addButton(buttons, '▶', label('Play selection', 'Riproduci selezione'), () => seekAndPlay(start),
-            'btn btn-sm btn-outline-primary');
-        addButton(buttons, '▶|', label('Go to end', 'Vai alla fine'), () => seekTo(end));
-        addButton(buttons, label('Reset', 'Ripristina'), label('Select full video', 'Seleziona tutto'), () => {
-            start = 0; end = duration; sync();
-        });
-        applyButton = addButton(buttons, '✂ ' + label('Apply trim', 'Applica taglio'),
-            label('Encode and replace download', 'Elabora e sostituisci il download'), apply,
-            'btn btn-sm btn-primary ms-auto');
-        panel.appendChild(buttons);
+        const actions = document.createElement('div');
+        actions.className = 'bt-trim-actions';
+        addButton(actions, null, label('Reset selection', 'Ripristina selezione'), () => {
+            start = 0;
+            end = duration;
+            sync();
+        }, 'btn btn-sm btn-outline-secondary bt-trim-btn bt-trim-reset', '↺');
+        applyButton = addButton(actions, 'scissors',
+            label('Apply trim', 'Applica taglio'), apply,
+            'btn btn-sm btn-primary bt-trim-btn bt-trim-apply',
+            label('Apply', 'Applica'));
+        bottom.appendChild(actions);
+        panel.appendChild(bottom);
 
         status = document.createElement('div');
-        status.className = 'small mt-2';
+        status.id = 'bt-trim-status';
         status.setAttribute('role', 'status');
         panel.appendChild(status);
         wrapper.appendChild(panel);
-        stage.insertAdjacentElement('afterend', wrapper);
+        controlRow.insertAdjacentElement('afterend', wrapper);
 
         let ticker = null;
         const tick = () => {
@@ -203,10 +287,12 @@
         player.addEventListener('timeupdate', onTimeUpdate);
         player.addEventListener('play', () => {
             if (ticker !== null) cancelAnimationFrame(ticker);
+            updatePlayButton();
             tick();
         });
         player.addEventListener('pause', () => {
             previewing = false;
+            updatePlayButton();
             if (ticker !== null) cancelAnimationFrame(ticker);
             ticker = null;
         });
@@ -331,6 +417,7 @@
             start = 0;
             end = 0;
             toggle.hidden = !sourceBlob;
+        updatePlayButton();
             panel.hidden = true;
             toggle.setAttribute('aria-expanded', 'false');
             if (status) setStatus('');
