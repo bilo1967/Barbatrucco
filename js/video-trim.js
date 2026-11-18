@@ -101,6 +101,8 @@
         input.min = '0';
         input.step = '0.1';
         input.className = 'form-control form-control-sm bt-trim-time';
+        input.style.width = '8rem';
+        input.style.fontVariantNumeric = 'tabular-nums';
         input.setAttribute('aria-label', fieldLabel.textContent);
         input.addEventListener('change', () => updateFromField(kind));
         addButton(row, '-', label('Back 0.1 s', 'Indietro di 0,1 s'), () => {
@@ -193,8 +195,21 @@
         wrapper.appendChild(panel);
         stage.insertAdjacentElement('afterend', wrapper);
 
+        let ticker = null;
+        const tick = () => {
+            onTimeUpdate();
+            ticker = !player.paused ? requestAnimationFrame(tick) : null;
+        };
         player.addEventListener('timeupdate', onTimeUpdate);
-        player.addEventListener('pause', () => { previewing = false; });
+        player.addEventListener('play', () => {
+            if (ticker !== null) cancelAnimationFrame(ticker);
+            tick();
+        });
+        player.addEventListener('pause', () => {
+            previewing = false;
+            if (ticker !== null) cancelAnimationFrame(ticker);
+            ticker = null;
+        });
         player.addEventListener('loadedmetadata', () => {
             if (!sourceBlob) return;
             if (Number.isFinite(player.duration) && player.duration > 0) {
