@@ -99,7 +99,6 @@
         const desired = get('audiooutput');
         try {
             await player.setSinkId(desired);
-            await window.BTHeadphoneMonitor?.setOutput(desired);
             outputSelection = desired;
         } catch (error) {
             console.warn('Unable to select playback output:', error);

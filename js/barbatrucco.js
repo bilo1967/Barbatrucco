@@ -505,17 +505,10 @@ $(document).ready(async function() {
 
 
     BTVolumeMixer.init();
-    BTVolumeMixer.onChange = (changed) => {
+    BTVolumeMixer.onChange = () => {
         if (volumi.A?.gain) volumi.A.gain.value =
             voiceoverActive ? Math.min(BTVolumeMixer.get('duck-record'), BTVolumeMixer.get('source')) : BTVolumeMixer.get('source');
         if (volumi.B?.gain) volumi.B.gain.value = BTVolumeMixer.get('mic');
-        BTHeadphoneMonitor.setDucking(voiceoverActive);
-        if (changed === 'duck-headphones' && streamCondivisione && !BTHeadphoneMonitor.active) {
-            BTVolumeMixer.showHeadphoneStatus(
-                'Start a new tab-audio recording to apply headphone attenuation.',
-                'Avvia una nuova registrazione audio di una scheda per applicare l’attenuazione in cuffia.'
-            );
-        }
     };
 
     timer = new MyChrono(100, function(t) {
@@ -572,9 +565,7 @@ $(document).ready(async function() {
 
             $('#record-video, #activate-webcam').prop('disabled', true);
 
-            streamCondivisione = await navigator.mediaDevices.getDisplayMedia(
-                BTHeadphoneMonitor.captureOptions(ScreenShareConstraints)
-            );
+            streamCondivisione = await navigator.mediaDevices.getDisplayMedia(ScreenShareConstraints);
 //          streamMicrofono = (mic === true) ? await navigator.mediaDevices.getUserMedia({ video: false, audio: true }) : null;
 
             if (mic) {
@@ -589,8 +580,6 @@ $(document).ready(async function() {
             if (!streamCondivisione.getAudioTracks().length) {
                 throw new Error('MediaStream has no audio track');
             }
-            // Only monitor when Chromium confirms native tab playback was suppressed.
-            await BTHeadphoneMonitor.attach(streamCondivisione);
             streamCondivisione.getTracks().forEach(track => {
                 track.addEventListener('ended', () => {
                     // Interruzione mediante i controlli nativi di condivisione del browser.
@@ -887,7 +876,6 @@ $(document).ready(async function() {
 
     const ripristinaVolume = () => {
         voiceoverActive = false;
-        BTHeadphoneMonitor.setDucking(false);
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
             console.log('volume b: '+ volumi.B.gain.value);
@@ -901,7 +889,6 @@ $(document).ready(async function() {
     // Duck
     $('#voiceover').on('mousedown', function() {
         voiceoverActive = true;
-        BTHeadphoneMonitor.setDucking(true);
         $(this).removeClass('btn-warning').addClass('btn-danger');
         if (!!volumi && volumi?.A instanceof GainNode && volumi?.B instanceof GainNode) {
             console.log('volume a: '+ volumi.A.gain.value);
@@ -949,7 +936,6 @@ $(document).ready(async function() {
 
     // Stop capture and release audio resources while preserving webcam preferences.
     function interrompiCondivisione() {
-        BTHeadphoneMonitor.stop();
         // Preserve the selected webcam and its preview between recordings.
         // It is released only if the user explicitly unchecks Webcam PiP.
         if (webcamPiP) webcamPiP.stopComposition();

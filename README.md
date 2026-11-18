@@ -10,7 +10,7 @@ You can test it (or use it from) here: [https://minirecorder.ditlab.it/](https:/
 
 - Record tab audio, with optional video, using the browser's screen-sharing interface.
 - Mix microphone audio with the captured source; optionally download a separate microphone recording.
-- Use voice-over controls to temporarily lower source-audio volume while speaking. Configure separate floor attenuation in the recording (default 5%) and headphones (default 100%). Headphone attenuation uses Chromium's experimental tab-audio playback suppression and requires selecting a browser tab with audio at the start of capture; unsupported capture sources retain normal playback.
+- Use voice-over controls to temporarily lower source-audio volume while speaking; the original audio level in the recording is configurable (default 5%). The original tab/application audio heard by the user is unchanged.
 - Overlay a webcam picture-in-picture on the recording; move and resize it before or during recording, and mirror the webcam horizontally.
 - Optionally remove the webcam background with MediaPipe Selfie Segmenter.
 - Pause, resume, stop, and preview recordings; use an optional delayed start.
