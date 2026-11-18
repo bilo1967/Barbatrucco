@@ -127,7 +127,7 @@
                 label('Go to selection end', 'Vai alla fine della selezione'),
                 () => seekTo(end));
         }
-        addButton(row, 'pin-angle-fill',
+        addButton(row, 'geo-alt-fill',
             label('Set to current position', 'Imposta alla posizione corrente'),
             () => {
                 const current = Number(player.currentTime);
@@ -157,6 +157,7 @@
         style.id = 'bt-video-trim-style';
         style.textContent = `
             .bt-trim-container { width: 100%; margin-top: 4px; text-align: left; }
+            .bt-trim-container:has(#bt-trim-panel[hidden]) { display: none; }
             #bt-trim-panel[hidden], #bt-trim-toggle[hidden] { display: none !important; }
             #bt-trim-toggle { width: 34px; min-width: 34px; padding: 5px 7px; }
             #bt-trim-panel {
