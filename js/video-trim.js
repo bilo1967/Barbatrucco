@@ -8,9 +8,12 @@
     let start = 0;
     let end = 0;
     let previewing = false;
+    let previewLimit = null;
+    let statusTimeout = null;
+    let lastEdited = 'start';
     let busy = false;
     let initialized = false;
-    let player, panel, toggle, startInput, endInput, lengthOutput, positionOutput, status, applyButton, playButton;
+    let player, panel, toggle, startInput, endInput, lengthOutput, status, applyButton, playButton, startRange, endRange, selectedTrack;
     const epsilon = 0.002;
 
     function label(en, it) {
@@ -18,10 +21,18 @@
     }
 
     function stamp(seconds) {
-        seconds = Math.max(0, Number(seconds) || 0);
-        const minutes = Math.floor(seconds / 60);
-        const sec = (seconds % 60).toFixed(1).padStart(4, '0');
-        return String(minutes).padStart(2, '0') + ':' + sec;
+        const total = Math.max(0, Number(seconds) || 0);
+        const hours = Math.floor(total / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
+        const sec = (total % 60).toFixed(1).padStart(4, '0');
+        return (hours ? String(hours).padStart(2, '0') + ':' : '') +
+            String(minutes).padStart(2, '0') + ':' + sec;
+    }
+
+    function parseTime(value) {
+        const parts = String(value).trim().replace(',', '.').split(':');
+        if (!parts.length || parts.length > 3 || parts.some(p => !/^\d+(\.\d+)?$/.test(p))) return NaN;
+        return parts.reduce((sum, part) => sum * 60 + Number(part), 0);
     }
 
     function precise(seconds) {
@@ -29,176 +40,244 @@
     }
 
     function setStatus(message, error) {
+        if (!status) return;
+        if (statusTimeout) clearTimeout(statusTimeout);
         status.textContent = message || '';
+        status.hidden = !message;
         status.classList.toggle('text-danger', !!error);
+        if (message && (error || /complet|completed/i.test(message))) {
+            statusTimeout = setTimeout(() => { status.hidden = true; }, error ? 6500 : 2400);
+        }
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     function sync() {
-        startInput.value = precise(start);
-        endInput.value = precise(end);
+        if (!startInput || !endInput || !startRange || !endRange) return;
+        startInput.value = stamp(start);
+        endInput.value = stamp(end);
+        startRange.max = String(duration);
+        endRange.max = String(duration);
+        startRange.value = String(start);
+        endRange.value = String(end);
+        const left = duration > 0 ? start / duration * 100 : 0;
+        const right = duration > 0 ? end / duration * 100 : 100;
+        selectedTrack.style.left = left + '%';
+        selectedTrack.style.width = Math.max(0, right - left) + '%';
         lengthOutput.textContent = stamp(end - start);
         applyButton.disabled = busy || !sourceBlob || end <= start + epsilon ||
             (start <= epsilon && end >= duration - epsilon);
     }
 
-    function updateFromField(which) {
-        const field = which === 'start' ? startInput : endInput;
-        const value = Number(field.value);
-        if (!Number.isFinite(value)) { sync(); return; }
-        if (which === 'start') start = Math.max(0, Math.min(value, end - 0.1));
-        else end = Math.max(start + 0.1, Math.min(duration, value));
+    function update(which, value, shouldSeek) {
+        if (!Number.isFinite(value) || duration <= 0) return sync();
+        if (which === 'start') start = clamp(value, 0, Math.max(0, end - 0.1));
+        else end = clamp(value, Math.min(duration, start + 0.1), duration);
+        lastEdited = which;
         sync();
+        if (shouldSeek) seekTo(which === 'start' ? start : end);
     }
 
     function seekTo(time) {
         if (!player || !Number.isFinite(player.duration)) return;
         player.pause();
         previewing = false;
-        player.currentTime = Math.max(0, Math.min(duration, time));
+        previewLimit = null;
+        player.currentTime = clamp(time, 0, duration);
+        updatePlayButton();
     }
 
-    async function seekAndPlay(time) {
-        if (!player || !Number.isFinite(player.duration)) return;
+    async function playSection(from, to) {
+        if (!player || !Number.isFinite(player.duration) || to <= from + epsilon) return;
         player.pause();
-        player.currentTime = Math.max(0, Math.min(duration, time));
-        previewing = true;
-        try { await player.play(); } catch (err) {
-            previewing = false;
+        previewing = false;
+        previewLimit = to;
+        player.currentTime = clamp(from, 0, duration);
+        try {
+            await player.play();
+            previewing = true;
+        } catch (err) {
             setStatus(String(err.message || err), true);
+            previewLimit = null;
         }
+        updatePlayButton();
+    }
+
+    function stopPreview() {
+        player.pause();
+        previewing = false;
+        previewLimit = null;
+        updatePlayButton();
     }
 
     function onTimeUpdate() {
-        positionOutput.textContent = stamp(player.currentTime);
-        if (previewing && player.currentTime >= end - 0.035) {
-            player.pause();
-            player.currentTime = end;
-            previewing = false;
+        if (previewLimit !== null && player.currentTime >= previewLimit - 0.025) {
+            const stop = previewLimit;
+            stopPreview();
+            player.currentTime = stop;
         }
     }
 
-    function addButton(parent, icon, title, callback, className, text) {
+    function addButton(parent, icon, title, handler, extraClass) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = className || 'btn btn-sm btn-outline-secondary bt-trim-btn';
+        button.className = 'btn btn-sm bt-trim-btn ' + (extraClass || 'btn-outline-secondary');
         button.title = title;
         button.setAttribute('aria-label', title);
-        button.innerHTML = icon ? '<i class="bi bi-' + icon + '" aria-hidden="true"></i>' : '';
-        if (text) button.appendChild(document.createTextNode(text));
-        button.addEventListener('click', callback);
+        button.innerHTML = '<i class="bi bi-' + icon + '" aria-hidden="true"></i>';
+        button.addEventListener('click', handler);
         parent.appendChild(button);
         return button;
     }
 
-    function makeField(parent, kind) {
-        const isStart = kind === 'start';
-        const group = document.createElement('div');
-        group.className = 'bt-trim-group';
-        const fieldLabel = document.createElement('label');
-        fieldLabel.className = 'bt-trim-label';
-        fieldLabel.textContent = isStart ? label('Start', 'Inizio') : label('End', 'Fine');
-        group.appendChild(fieldLabel);
-
-        const row = document.createElement('div');
-        row.className = 'bt-trim-group-row';
-        if (isStart) {
-            addButton(row, 'skip-start',
-                label('Go to selection start', 'Vai all’inizio della selezione'),
-                () => seekTo(start));
-        }
-        addButton(row, 'dash', label('Back 0.1 s', 'Indietro di 0,1 s'), () => {
-            input.value = precise(Number(input.value) - 0.1);
-            updateFromField(kind);
-        });
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = '0';
-        input.step = '0.1';
-        input.className = 'form-control form-control-sm bt-trim-time';
-        input.setAttribute('aria-label', fieldLabel.textContent);
-        input.addEventListener('change', () => updateFromField(kind));
-        row.appendChild(input);
-        addButton(row, 'plus', label('Forward 0.1 s', 'Avanti di 0,1 s'), () => {
-            input.value = precise(Number(input.value) + 0.1);
-            updateFromField(kind);
-        });
-        if (!isStart) {
-            addButton(row, 'skip-end',
-                label('Go to selection end', 'Vai alla fine della selezione'),
-                () => seekTo(end));
-        }
-        addButton(row, 'geo-alt-fill',
-            label('Set to current position', 'Imposta alla posizione corrente'),
-            () => {
-                const current = Number(player.currentTime);
-                if (!Number.isFinite(current)) return;
-                if (isStart) start = Math.max(0, Math.min(current, end - 0.1));
-                else end = Math.min(duration, Math.max(current, start + 0.1));
-                sync();
-            }, 'btn btn-sm btn-primary bt-trim-btn bt-trim-pin');
-
-        group.appendChild(row);
-        parent.appendChild(group);
-        return input;
-    }
-
     function updatePlayButton() {
-        if (!playButton) return;
-        const playing = !player.paused && previewing;
-        const title = playing ? label('Stop preview', 'Ferma anteprima')
-            : label('Play selection', 'Riproduci selezione');
+        if (!playButton || !player) return;
+        const playing = previewing && !player.paused;
+        playButton.innerHTML = '<i class="bi bi-' + (playing ? 'stop-fill' : 'play-fill') + '"></i>';
+        const title = playing ? label('Stop playback', 'Ferma riproduzione')
+            : label('Play from current position', 'Riproduci dalla posizione corrente');
         playButton.title = title;
         playButton.setAttribute('aria-label', title);
-        playButton.innerHTML = '<i class="bi bi-' + (playing ? 'stop-fill' : 'play-fill') + '" aria-hidden="true"></i>';
+    }
+
+    function makeTimeField(parent, which) {
+        const field = document.createElement('input');
+        field.type = 'text';
+        field.className = 'form-control form-control-sm bt-trim-time';
+        field.inputMode = 'decimal';
+        field.spellcheck = false;
+        field.setAttribute('aria-label', which === 'start' ? label('Start', 'Inizio') : label('End', 'Fine'));
+        field.title = label('Time (mm:ss.s)', 'Tempo (mm:ss.s)');
+        const commit = () => {
+            const n = parseTime(field.value);
+            if (!Number.isFinite(n)) { sync(); return; }
+            update(which, Math.round(n * 10) / 10, true);
+        };
+        field.addEventListener('change', commit);
+        field.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                update(which, (which === 'start' ? start : end) + (e.key === 'ArrowUp' ? 0.1 : -0.1), true);
+            } else if (e.key === 'Enter') {
+                commit();
+                field.blur();
+            }
+        });
+        const box = document.createElement('div');
+        box.className = 'bt-trim-field';
+        box.appendChild(field);
+        parent.appendChild(box);
+        return field;
+    }
+
+    function makeRange(parent, which) {
+        const range = document.createElement('input');
+        range.type = 'range';
+        range.className = 'bt-trim-range bt-trim-range-' + which;
+        range.min = '0';
+        range.max = '1';
+        range.step = 'any';
+        range.setAttribute('aria-label', which === 'start' ?
+            label('Start marker', 'Indicatore di inizio') : label('End marker', 'Indicatore di fine'));
+        range.addEventListener('input', () => {
+            update(which, Math.round(Number(range.value) * 10) / 10, false);
+        });
+        range.addEventListener('change', () => {
+            seekTo(which === 'start' ? start : end);
+        });
+        range.addEventListener('keydown', e => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            update(which, (which === 'start' ? start : end) + (e.key === 'ArrowRight' ? 0.1 : -0.1), true);
+        });
+        // Keep the selected handle above the other when both markers overlap.
+        range.addEventListener('pointerdown', () => {
+            if (startRange && endRange) {
+                startRange.style.zIndex = which === 'start' ? '4' : '3';
+                endRange.style.zIndex = which === 'end' ? '4' : '3';
+            }
+        });
+        parent.appendChild(range);
+        return range;
     }
 
     function injectStyle() {
         const style = document.createElement('style');
         style.id = 'bt-video-trim-style';
         style.textContent = `
-            .bt-trim-container { width: 100%; margin-top: 4px; text-align: left; }
+            .bt-trim-container { margin-top: 3px; width: 100%; }
             .bt-trim-container:has(#bt-trim-panel[hidden]) { display: none; }
             #bt-trim-panel[hidden], #bt-trim-toggle[hidden] { display: none !important; }
             #bt-trim-toggle { width: 34px; min-width: 34px; padding: 5px 7px; }
             #bt-trim-panel {
-                padding: 8px 10px; border: 1px solid var(--ui-stroke);
-                border-radius: 7px; background: var(--ui-card); color: var(--ui-text);
+                position: relative; padding: 5px 6px; border: 1px solid var(--ui-stroke);
+                border-radius: 6px; background: var(--ui-card); color: var(--ui-text);
             }
-            .bt-trim-top { display: flex; justify-content: center; align-items: end; flex-wrap: wrap; gap: 7px; }
-            .bt-trim-group { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-            .bt-trim-label { font-size: 11px; color: var(--ui-muted); line-height: 1.1; }
-            .bt-trim-group-row { display: flex; align-items: center; gap: 3px; }
+            .bt-trim-row {
+                display: flex; flex-wrap: nowrap; align-items: center;
+                justify-content: space-between; gap: 5px; min-height: 30px;
+            }
             #bt-trim-panel .bt-trim-btn {
-                flex: 0 0 auto; min-width: 25px; width: 25px; height: 27px;
-                padding: 2px 3px; font-size: 13px; line-height: 1;
-                border-radius: 5px; margin: 0; display: inline-flex;
-                align-items: center; justify-content: center;
+                flex: 0 0 auto; width: 27px; min-width: 27px; height: 27px;
+                margin: 0; padding: 2px; font-size: 14px; line-height: 1;
+                border-radius: 5px; display: inline-flex; align-items: center;
+                justify-content: center;
             }
-            #bt-trim-panel .bt-trim-pin { min-width: 28px; width: 28px; font-size: 15px; }
-            #bt-trim-panel .bt-trim-play {
-                min-width: 32px; width: 32px; height: 32px;
-                align-self: end; margin-bottom: 0; font-size: 17px;
+            #bt-trim-panel .bt-trim-play { width: 29px; min-width: 29px; }
+            #bt-trim-panel .bt-trim-apply { width: 31px; min-width: 31px; }
+            .bt-trim-field { flex: 0 0 auto; border: 1px solid var(--ui-stroke);
+                border-radius: 5px; padding: 2px; }
+            #bt-trim-panel .bt-trim-time { width: 69px; height: 24px; padding: 2px 3px;
+                text-align: center; font-size: 11px; border: 0; box-shadow: none !important;
+                font-variant-numeric: tabular-nums; background: transparent;
+                color: var(--ui-text); }
+            .bt-trim-dual { flex: 1 1 auto; min-width: 150px; height: 26px;
+                position: relative; margin: 0 2px; }
+            .bt-trim-track { position: absolute; top: 11px; left: 0; width: 100%;
+                height: 5px; border-radius: 5px; background: var(--ui-stroke); }
+            .bt-trim-selected { position: absolute; top: 0; height: 100%;
+                border-radius: inherit; background: var(--ui-accent); }
+            #bt-trim-panel input.bt-trim-range {
+                -webkit-appearance: none; appearance: none; position: absolute;
+                inset: 0; width: 100%; height: 26px; margin: 0;
+                background: transparent; pointer-events: none; cursor: pointer;
+                touch-action: none;
             }
-            #bt-trim-panel .bt-trim-time {
-                width: 81px; min-width: 0; height: 27px; padding: 2px 4px;
-                font-size: 12px; text-align: center; font-variant-numeric: tabular-nums;
-                border-radius: 5px; appearance: textfield; -moz-appearance: textfield;
+            #bt-trim-panel input.bt-trim-range::-webkit-slider-runnable-track {
+                height: 5px; background: transparent; border: 0;
             }
-            #bt-trim-panel .bt-trim-time::-webkit-inner-spin-button,
-            #bt-trim-panel .bt-trim-time::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-            .bt-trim-bottom { margin-top: 7px; display: flex; align-items: center;
-                justify-content: space-between; flex-wrap: wrap; gap: 6px; }
-            .bt-trim-summary { font-size: 11px; color: var(--ui-muted); font-variant-numeric: tabular-nums; }
-            .bt-trim-actions { display: flex; gap: 4px; align-items: center; }
-            #bt-trim-panel .bt-trim-reset { font-size: 17px; width: 28px; height: 27px; }
-            #bt-trim-panel .bt-trim-apply { width: auto; min-width: 85px; height: 27px;
-                gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
-            #bt-trim-status:empty { display: none; }
-            #bt-trim-status { font-size: 11px; margin-top: 4px; }
-            @media(max-width: 620px) {
-                .bt-trim-top { justify-content: center; gap: 6px; }
-                .bt-trim-group-row { gap: 2px; }
-                #bt-trim-panel .bt-trim-time { width: 70px; }
+            #bt-trim-panel input.bt-trim-range::-moz-range-track {
+                height: 5px; background: transparent; border: 0;
+            }
+            #bt-trim-panel input.bt-trim-range::-webkit-slider-thumb {
+                -webkit-appearance: none; appearance: none; pointer-events: auto;
+                width: 15px; height: 20px; margin-top: -8px; border-radius: 4px;
+                border: 2px solid var(--ui-card); background: var(--ui-accent);
+                box-shadow: 0 0 0 1px var(--ui-stroke);
+            }
+            #bt-trim-panel input.bt-trim-range::-moz-range-thumb {
+                pointer-events: auto; width: 13px; height: 18px; border-radius: 4px;
+                border: 2px solid var(--ui-card); background: var(--ui-accent);
+                box-shadow: 0 0 0 1px var(--ui-stroke);
+            }
+            #bt-trim-panel input.bt-trim-range:focus-visible::-webkit-slider-thumb {
+                box-shadow: 0 0 0 2px var(--ui-accent);
+            }
+            #bt-trim-panel .bt-trim-duration { flex: 0 0 auto;
+                white-space: nowrap; font-size: 11px; font-variant-numeric: tabular-nums;
+                color: var(--ui-muted); min-width: 47px; text-align: center; }
+            #bt-trim-status {
+                position: absolute; right: 7px; bottom: calc(100% + 4px);
+                background: var(--ui-card); border: 1px solid var(--ui-stroke);
+                padding: 3px 8px; border-radius: 5px; z-index: 20; box-shadow: 0 4px 14px #0006;
+                font-size: 11px; white-space: nowrap; pointer-events: none;
+            }
+            #bt-trim-status[hidden] { display: none !important; }
+            @media (max-width: 700px) {
+                #bt-trim-panel { overflow-x: auto; }
+                .bt-trim-row { min-width: 590px; }
             }
         `;
         document.head.appendChild(style);
@@ -217,9 +296,12 @@
             label('Trim video', 'Taglia video'), () => {
                 panel.hidden = !panel.hidden;
                 toggle.setAttribute('aria-expanded', String(!panel.hidden));
-                if (!panel.hidden) sync();
-            }, 'btn btn-sm btn-outline-secondary');
+                if (!panel.hidden) { sync(); setStatus(''); }
+                else stopPreview();
+            }, 'btn-outline-secondary');
         toggle.id = 'bt-trim-toggle';
+        toggle.classList.remove('bt-trim-btn');
+        toggle.classList.add('btn');
         toggle.hidden = true;
         toggle.setAttribute('aria-expanded', 'false');
         toggle.setAttribute('aria-controls', 'bt-trim-panel');
@@ -230,51 +312,56 @@
         panel.id = 'bt-trim-panel';
         panel.hidden = true;
 
-        const top = document.createElement('div');
-        top.className = 'bt-trim-top';
-        startInput = makeField(top, 'start');
-        playButton = addButton(top, 'play-fill',
-            label('Play selection', 'Riproduci selezione'), async () => {
-                if (previewing && !player.paused) {
-                    player.pause();
-                    previewing = false;
-                    updatePlayButton();
-                } else {
-                    await seekAndPlay(start);
-                    updatePlayButton();
+        const row = document.createElement('div');
+        row.className = 'bt-trim-row';
+        addButton(row, 'play-fill',
+            label('Play 2 seconds from start', 'Riproduci 2 secondi dall’inizio'),
+            () => playSection(start, Math.min(end, start + 2)), 'btn-outline-primary');
+        startInput = makeTimeField(row, 'start');
+
+        const dual = document.createElement('div');
+        dual.className = 'bt-trim-dual';
+        dual.title = label('Drag a marker; release to seek. Arrow keys: 0.1 s.',
+            'Trascina un indicatore; rilascia per il seek. Frecce: 0,1 s.');
+        const track = document.createElement('div');
+        track.className = 'bt-trim-track';
+        selectedTrack = document.createElement('div');
+        selectedTrack.className = 'bt-trim-selected';
+        track.appendChild(selectedTrack);
+        dual.appendChild(track);
+        startRange = makeRange(dual, 'start');
+        endRange = makeRange(dual, 'end');
+        row.appendChild(dual);
+
+        endInput = makeTimeField(row, 'end');
+        addButton(row, 'play-fill',
+            label('Play 2 seconds before end', 'Riproduci i 2 secondi prima della fine'),
+            () => playSection(Math.max(start, end - 2), end), 'btn-outline-primary');
+        playButton = addButton(row, 'play-circle',
+            label('Play from current position', 'Riproduci dalla posizione corrente'),
+            () => {
+                if (previewing && !player.paused) stopPreview();
+                else {
+                    const position = Number(player.currentTime);
+                    const from = Number.isFinite(position) && position >= start && position < end ?
+                        position : start;
+                    playSection(from, end);
                 }
-            }, 'btn btn-sm btn-outline-primary bt-trim-btn bt-trim-play');
-        endInput = makeField(top, 'end');
-        panel.appendChild(top);
-
-        const bottom = document.createElement('div');
-        bottom.className = 'bt-trim-bottom';
-        const summary = document.createElement('div');
-        summary.className = 'bt-trim-summary';
-        summary.appendChild(document.createTextNode(label('Duration: ', 'Durata: ')));
-        lengthOutput = document.createElement('strong');
-        summary.appendChild(lengthOutput);
-        summary.appendChild(document.createTextNode('  ·  ' + label('Position: ', 'Posizione: ')));
-        positionOutput = document.createElement('span');
-        summary.appendChild(positionOutput);
-        bottom.appendChild(summary);
-
-        const actions = document.createElement('div');
-        actions.className = 'bt-trim-actions';
-        addButton(actions, null, label('Reset selection', 'Ripristina selezione'), () => {
-            start = 0;
-            end = duration;
-            sync();
-        }, 'btn btn-sm btn-outline-secondary bt-trim-btn bt-trim-reset', '↺');
-        applyButton = addButton(actions, 'scissors',
-            label('Apply trim', 'Applica taglio'), apply,
-            'btn btn-sm btn-primary bt-trim-btn bt-trim-apply',
-            label('Apply', 'Applica'));
-        bottom.appendChild(actions);
-        panel.appendChild(bottom);
+            }, 'btn-outline-primary bt-trim-play');
+        lengthOutput = document.createElement('span');
+        lengthOutput.className = 'bt-trim-duration';
+        lengthOutput.title = label('Selected duration', 'Durata selezionata');
+        row.appendChild(lengthOutput);
+        addButton(row, 'arrow-counterclockwise',
+            label('Reset selection', 'Ripristina selezione'),
+            () => { start = 0; end = duration; sync(); }, 'btn-outline-secondary');
+        applyButton = addButton(row, 'scissors',
+            label('Apply trim', 'Applica taglio'), apply, 'btn-primary bt-trim-apply');
+        panel.appendChild(row);
 
         status = document.createElement('div');
         status.id = 'bt-trim-status';
+        status.hidden = true;
         status.setAttribute('role', 'status');
         panel.appendChild(status);
         wrapper.appendChild(panel);
@@ -288,14 +375,13 @@
         player.addEventListener('timeupdate', onTimeUpdate);
         player.addEventListener('play', () => {
             if (ticker !== null) cancelAnimationFrame(ticker);
-            updatePlayButton();
             tick();
+            updatePlayButton();
         });
         player.addEventListener('pause', () => {
-            previewing = false;
-            updatePlayButton();
             if (ticker !== null) cancelAnimationFrame(ticker);
             ticker = null;
+            updatePlayButton();
         });
         player.addEventListener('loadedmetadata', () => {
             if (!sourceBlob) return;
@@ -396,9 +482,9 @@
                 }
             });
             window.btApplyTrimResult(result);
-            setStatus(label('Trim completed.', 'Taglio completato.'));
             panel.hidden = true;
             toggle.setAttribute('aria-expanded', 'false');
+            toggle.title = label('Trim completed', 'Taglio completato');
         } catch (err) {
             console.error('Video trim failed:', err);
             setStatus(label('Trim failed: ', 'Taglio non riuscito: ') + (err.message || err), true);
@@ -418,10 +504,11 @@
             start = 0;
             end = 0;
             toggle.hidden = !sourceBlob;
-        updatePlayButton();
+            updatePlayButton();
             panel.hidden = true;
             toggle.setAttribute('aria-expanded', 'false');
             if (status) setStatus('');
+            previewLimit = null;
         }
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildUI);
