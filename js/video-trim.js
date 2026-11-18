@@ -10,6 +10,7 @@
     let previewing = false;
     let previewLimit = null;
     let statusTimeout = null;
+    let closing = false;
     let lastEdited = 'start';
     let busy = false;
     let initialized = false;
@@ -44,6 +45,41 @@
         if (statusTimeout) clearTimeout(statusTimeout);
         status.textContent = message || '';
         status.classList.toggle('text-danger', !!error);
+    }
+
+    function closePanel(animated = true) {
+        if (!panel || panel.hidden || closing) return;
+        closing = true;
+        const wrapper = panel.parentElement;
+        toggle.setAttribute('aria-expanded', 'false');
+        if (!animated || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            panel.hidden = true;
+            closing = false;
+            return;
+        }
+        const height = wrapper.getBoundingClientRect().height;
+        wrapper.style.height = height + 'px';
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.opacity = '1';
+        void wrapper.offsetHeight;
+        wrapper.style.transition = 'height 180ms ease, opacity 180ms ease';
+        wrapper.style.height = '0px';
+        wrapper.style.opacity = '0';
+        let finished = false;
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            panel.hidden = true;
+            wrapper.style.removeProperty('transition');
+            wrapper.style.removeProperty('height');
+            wrapper.style.removeProperty('overflow');
+            wrapper.style.removeProperty('opacity');
+            closing = false;
+        };
+        wrapper.addEventListener('transitionend', e => {
+            if (e.target === wrapper && e.propertyName === 'height') finish();
+        }, { once: true });
+        setTimeout(finish, 300);
     }
 
     function clamp(value, min, max) {
@@ -292,10 +328,16 @@
 
         toggle = addButton(controlStrip, 'scissors',
             label('Trim video', 'Taglia video'), () => {
-                panel.hidden = !panel.hidden;
-                toggle.setAttribute('aria-expanded', String(!panel.hidden));
-                if (!panel.hidden) { sync(); setStatus(''); }
-                else stopPreview();
+                if (closing) return;
+                if (panel.hidden) {
+                    panel.hidden = false;
+                    toggle.setAttribute('aria-expanded', 'true');
+                    sync();
+                    setStatus('');
+                } else {
+                    stopPreview();
+                    closePanel();
+                }
             }, 'btn-outline-secondary');
         toggle.id = 'bt-trim-toggle';
         toggle.classList.remove('bt-trim-btn');
@@ -358,7 +400,7 @@
         const actions = document.createElement('div');
         actions.className = 'bt-trim-actions';
         applyButton = addButton(actions, 'check-lg',
-            label('Apply trim', 'Applica taglio'), apply, 'btn-primary bt-trim-apply');
+            label('Apply trim', 'Applica taglio'), apply, 'btn-success bt-trim-apply');
         panel.appendChild(actions);
         wrapper.appendChild(panel);
         controlRow.insertAdjacentElement('afterend', wrapper);
@@ -478,9 +520,9 @@
                 }
             });
             window.btApplyTrimResult(result);
-            panel.hidden = false;
-            toggle.setAttribute('aria-expanded', 'true');
             toggle.title = label('Trim completed', 'Taglio completato');
+            setStatus(label('Trim completed.', 'Taglio completato.'));
+            closePanel(true);
         } catch (err) {
             console.error('Video trim failed:', err);
             setStatus(label('Trim failed: ', 'Taglio non riuscito: ') + (err.message || err), true);
@@ -501,9 +543,11 @@
             end = 0;
             toggle.hidden = !sourceBlob;
             updatePlayButton();
-            panel.hidden = true;
-            toggle.setAttribute('aria-expanded', 'false');
-            if (status) setStatus('');
+            if (!busy) {
+                panel.hidden = true;
+                toggle.setAttribute('aria-expanded', 'false');
+                if (status) setStatus('');
+            }
             previewLimit = null;
         }
     };
