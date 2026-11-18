@@ -43,11 +43,7 @@
         if (!status) return;
         if (statusTimeout) clearTimeout(statusTimeout);
         status.textContent = message || '';
-        status.hidden = !message;
         status.classList.toggle('text-danger', !!error);
-        if (message && (error || /complet|completed/i.test(message))) {
-            statusTimeout = setTimeout(() => { status.hidden = true; }, error ? 6500 : 2400);
-        }
     }
 
     function clamp(value, min, max) {
@@ -212,72 +208,68 @@
             #bt-trim-panel[hidden], #bt-trim-toggle[hidden] { display: none !important; }
             #bt-trim-toggle { width: 34px; min-width: 34px; padding: 5px 7px; }
             #bt-trim-panel {
-                position: relative; padding: 5px 6px; border: 1px solid var(--ui-stroke);
+                display: flex; align-items: center; gap: 14px;
+                padding: 3px 7px; border: 1px solid var(--ui-stroke);
                 border-radius: 6px; background: var(--ui-card); color: var(--ui-text);
+                min-width: 0;
             }
-            .bt-trim-row {
-                display: flex; flex-wrap: nowrap; align-items: center;
-                justify-content: space-between; gap: 5px; min-height: 30px;
-            }
-            #bt-trim-panel .bt-trim-btn {
-                flex: 0 0 auto; width: 27px; min-width: 27px; height: 27px;
-                margin: 0; padding: 2px; font-size: 14px; line-height: 1;
-                border-radius: 5px; display: inline-flex; align-items: center;
-                justify-content: center;
-            }
-            #bt-trim-panel .bt-trim-play { width: 29px; min-width: 29px; }
+            .bt-trim-controls { display: flex; flex: 1 1 auto; min-width: 0;
+                flex-direction: column; gap: 0; text-align: left; }
+            .bt-trim-caption { color: var(--ui-muted); font-size: 10px;
+                line-height: 12px; height: 12px; }
+            .bt-trim-row { display: flex; flex: 1 1 auto; align-items: center;
+                gap: 4px; min-height: 28px; }
+            .bt-trim-actions { flex: 0 0 auto; display: flex; gap: 5px;
+                align-items: center; justify-content: flex-end; }
+            #bt-trim-panel .bt-trim-btn { flex: 0 0 auto; width: 27px; min-width: 27px;
+                height: 27px; margin: 0; padding: 2px; font-size: 14px;
+                line-height: 1; border-radius: 5px; display: inline-flex;
+                justify-content: center; align-items: center; }
             #bt-trim-panel .bt-trim-apply { width: 31px; min-width: 31px; }
             .bt-trim-field { flex: 0 0 auto; border: 1px solid var(--ui-stroke);
                 border-radius: 5px; padding: 2px; }
-            #bt-trim-panel .bt-trim-time { width: 69px; height: 24px; padding: 2px 3px;
-                text-align: center; font-size: 11px; border: 0; box-shadow: none !important;
-                font-variant-numeric: tabular-nums; background: transparent;
-                color: var(--ui-text); }
-            .bt-trim-dual { flex: 1 1 auto; min-width: 150px; height: 26px;
+            #bt-trim-panel .bt-trim-time { width: 57px; height: 23px; padding: 2px 1px;
+                text-align: center; font-size: 10.5px; border: 0; box-shadow: none !important;
+                font-variant-numeric: tabular-nums; background: transparent; color: var(--ui-text); }
+            .bt-trim-dual { flex: 1 1 auto; min-width: 170px; height: 26px;
                 position: relative; margin: 0 2px; }
-            .bt-trim-track { position: absolute; top: 11px; left: 0; width: 100%;
-                height: 5px; border-radius: 5px; background: var(--ui-stroke); }
+            .bt-trim-track { position: absolute; top: 11px; left: 0;
+                width: 100%; height: 5px; border-radius: 5px; background: var(--ui-stroke); }
             .bt-trim-selected { position: absolute; top: 0; height: 100%;
                 border-radius: inherit; background: var(--ui-accent); }
-            #bt-trim-panel input.bt-trim-range {
-                -webkit-appearance: none; appearance: none; position: absolute;
-                inset: 0; width: 100%; height: 26px; margin: 0;
-                background: transparent; pointer-events: none; cursor: pointer;
-                touch-action: none;
-            }
+            #bt-trim-panel input.bt-trim-range { -webkit-appearance: none; appearance: none;
+                position: absolute; inset: 0; width: 100%; height: 26px;
+                margin: 0; background: transparent; pointer-events: none;
+                cursor: pointer; touch-action: none; }
             #bt-trim-panel input.bt-trim-range::-webkit-slider-runnable-track {
-                height: 5px; background: transparent; border: 0;
-            }
+                height: 5px; background: transparent; border: 0; }
             #bt-trim-panel input.bt-trim-range::-moz-range-track {
-                height: 5px; background: transparent; border: 0;
-            }
+                height: 5px; background: transparent; border: 0; }
             #bt-trim-panel input.bt-trim-range::-webkit-slider-thumb {
                 -webkit-appearance: none; appearance: none; pointer-events: auto;
                 width: 15px; height: 20px; margin-top: -8px; border-radius: 4px;
                 border: 2px solid var(--ui-card); background: var(--ui-accent);
-                box-shadow: 0 0 0 1px var(--ui-stroke);
-            }
+                box-shadow: 0 0 0 1px var(--ui-stroke); }
             #bt-trim-panel input.bt-trim-range::-moz-range-thumb {
                 pointer-events: auto; width: 13px; height: 18px; border-radius: 4px;
                 border: 2px solid var(--ui-card); background: var(--ui-accent);
-                box-shadow: 0 0 0 1px var(--ui-stroke);
-            }
+                box-shadow: 0 0 0 1px var(--ui-stroke); }
             #bt-trim-panel input.bt-trim-range:focus-visible::-webkit-slider-thumb {
-                box-shadow: 0 0 0 2px var(--ui-accent);
-            }
-            #bt-trim-panel .bt-trim-duration { flex: 0 0 auto;
-                white-space: nowrap; font-size: 11px; font-variant-numeric: tabular-nums;
-                color: var(--ui-muted); min-width: 47px; text-align: center; }
+                box-shadow: 0 0 0 2px var(--ui-accent); }
+            #bt-trim-panel .bt-trim-duration {
+                position: absolute; z-index: 5; top: -7px; left: 50%;
+                transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+                font-size: 10px; line-height: 12px; font-variant-numeric: tabular-nums;
+                color: var(--ui-text); background: var(--ui-card); padding: 0 4px;
+                border-radius: 3px; }
             #bt-trim-status {
-                position: absolute; right: 7px; bottom: calc(100% + 4px);
-                background: var(--ui-card); border: 1px solid var(--ui-stroke);
-                padding: 3px 8px; border-radius: 5px; z-index: 20; box-shadow: 0 4px 14px #0006;
-                font-size: 11px; white-space: nowrap; pointer-events: none;
-            }
-            #bt-trim-status[hidden] { display: none !important; }
+                height: 12px; line-height: 12px; flex: 0 0 12px;
+                font-size: 10px; overflow: hidden; white-space: nowrap;
+                text-overflow: ellipsis; color: var(--ui-muted); }
+            #bt-trim-status:empty::after { content: ' '; }
             @media (max-width: 700px) {
                 #bt-trim-panel { overflow-x: auto; }
-                .bt-trim-row { min-width: 590px; }
+                .bt-trim-controls { min-width: 370px; }
             }
         `;
         document.head.appendChild(style);
@@ -312,6 +304,14 @@
         panel.id = 'bt-trim-panel';
         panel.hidden = true;
 
+        // Single compact flex panel: edit controls on the left, actions on the right.
+        const controls = document.createElement('div');
+        controls.className = 'bt-trim-controls';
+        const caption = document.createElement('div');
+        caption.className = 'bt-trim-caption';
+        caption.textContent = label('Select the portion to keep', 'Seleziona la parte da conservare');
+        controls.appendChild(caption);
+
         const row = document.createElement('div');
         row.className = 'bt-trim-row';
         addButton(row, 'play-fill',
@@ -331,39 +331,32 @@
         dual.appendChild(track);
         startRange = makeRange(dual, 'start');
         endRange = makeRange(dual, 'end');
+        lengthOutput = document.createElement('span');
+        lengthOutput.className = 'bt-trim-duration';
+        lengthOutput.title = label('Selected duration', 'Durata selezionata');
+        dual.appendChild(lengthOutput);
         row.appendChild(dual);
 
         endInput = makeTimeField(row, 'end');
         addButton(row, 'play-fill',
             label('Play 2 seconds before end', 'Riproduci i 2 secondi prima della fine'),
             () => playSection(Math.max(start, end - 2), end), 'btn-outline-primary');
-        playButton = addButton(row, 'play-circle',
-            label('Play from current position', 'Riproduci dalla posizione corrente'),
-            () => {
-                if (previewing && !player.paused) stopPreview();
-                else {
-                    const position = Number(player.currentTime);
-                    const from = Number.isFinite(position) && position >= start && position < end ?
-                        position : start;
-                    playSection(from, end);
-                }
-            }, 'btn-outline-primary bt-trim-play');
-        lengthOutput = document.createElement('span');
-        lengthOutput.className = 'bt-trim-duration';
-        lengthOutput.title = label('Selected duration', 'Durata selezionata');
-        row.appendChild(lengthOutput);
-        addButton(row, 'arrow-counterclockwise',
-            label('Reset selection', 'Ripristina selezione'),
-            () => { start = 0; end = duration; sync(); }, 'btn-outline-secondary');
-        applyButton = addButton(row, 'scissors',
-            label('Apply trim', 'Applica taglio'), apply, 'btn-primary bt-trim-apply');
-        panel.appendChild(row);
+        controls.appendChild(row);
 
         status = document.createElement('div');
         status.id = 'bt-trim-status';
-        status.hidden = true;
         status.setAttribute('role', 'status');
-        panel.appendChild(status);
+        controls.appendChild(status);
+        panel.appendChild(controls);
+
+        const actions = document.createElement('div');
+        actions.className = 'bt-trim-actions';
+        addButton(actions, 'arrow-counterclockwise',
+            label('Reset selection', 'Ripristina selezione'),
+            () => { start = 0; end = duration; sync(); }, 'btn-outline-secondary');
+        applyButton = addButton(actions, 'scissors',
+            label('Apply trim', 'Applica taglio'), apply, 'btn-primary bt-trim-apply');
+        panel.appendChild(actions);
         wrapper.appendChild(panel);
         controlRow.insertAdjacentElement('afterend', wrapper);
 
@@ -482,8 +475,8 @@
                 }
             });
             window.btApplyTrimResult(result);
-            panel.hidden = true;
-            toggle.setAttribute('aria-expanded', 'false');
+            panel.hidden = false;
+            toggle.setAttribute('aria-expanded', 'true');
             toggle.title = label('Trim completed', 'Taglio completato');
         } catch (err) {
             console.error('Video trim failed:', err);
