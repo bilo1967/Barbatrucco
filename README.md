@@ -18,6 +18,16 @@ You can test it (or use it from) here: [https://minirecorder.ditlab.it/](https:/
 - Switch between English and Italian, and between light and dark themes.
 - Save interface preferences locally in the browser (`localStorage`).
 
+## Frontend dependencies
+
+- Bootstrap **5.3.9** (CSS and JS bundle with Popper)
+- Bootstrap Icons **1.13.2**
+- Bootbox **6.0.4** (vendored as `js/bootbox.all.min.js`, including locales)
+- jQuery **3.8.0**, retained for Bootbox and existing recorder scripts; the separate jQuery 4 migration is deferred
+- FFmpeg.wasm **0.12.15** (existing local ESM build); MediaPipe Tasks Vision **1.2.3** (loaded on demand)
+
+Bootstrap, icons, and jQuery are currently loaded from version-pinned CDNs; recordings remain entirely local.
+
 ## Requirements
 
 - A modern **Chromium-based browser** (such as Chrome, Edge, or Brave) is recommended. Tab-audio capture and media codec support vary by browser and operating system.

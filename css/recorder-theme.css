@@ -73,7 +73,7 @@ body > .container-fluid > .row > .col-sm.text-center:first-child {
     width: 104px;
 }
 
-.recorder-caption-language .custom-select {
+.recorder-caption-language .form-select {
     height: 29px;
     padding: 3px 25px 3px 10px;
     font-size: 12px;
@@ -83,7 +83,7 @@ body > .container-fluid > .row > .col-sm.text-center:first-child {
     border-radius: 7px;
 }
 
-.recorder-caption-language .custom-select:focus {
+.recorder-caption-language .form-select:focus {
     border-color: var(--ui-accent);
     box-shadow: 0 0 0 2px #69baff33;
 }
@@ -299,11 +299,11 @@ body > .container-fluid > .row > .col-sm.text-center:first-child {
     font-size: 12px;
 }
 
-#audio-format-selector .ml-2 {
+#audio-format-selector .ms-2 {
     margin-left: 0 !important;
 }
 
-#audio-format-selector .custom-control-label {
+#audio-format-selector .form-check-label {
     cursor: pointer;
 }
 
@@ -877,7 +877,7 @@ a:focus-visible {
     width: auto !important;
 }
 
-.recorder-caption-language .custom-select {
+.recorder-caption-language .form-select {
     width: 104px;
     flex: 0 0 104px;
     height: 29px;
@@ -977,7 +977,7 @@ html[data-rec-theme="light"] .recorder-caption {
     border-color: #d5dfeb;
 }
 
-html[data-rec-theme="light"] .recorder-caption-language .custom-select,
+html[data-rec-theme="light"] .recorder-caption-language .form-select,
 html[data-rec-theme="light"] #ui-theme-toggle {
     background-color: #fff;
     border-color: #b9c8da;
@@ -1130,7 +1130,7 @@ html[data-rec-theme="light"] #grafico {
 }
 
 @media (max-width: 480px) {
-    .recorder-caption-language .custom-select {
+    .recorder-caption-language .form-select {
         width: 79px;
         flex-basis: 79px;
         padding-left: 6px;
@@ -1161,13 +1161,13 @@ html[data-rec-theme="light"] #grafico {
     color: var(--ui-text);
 }
 
-.bootbox .close {
+.bootbox .btn-close {
     color: var(--ui-text);
     text-shadow: none;
     opacity: 0.7;
 }
 
-.bootbox .close:hover {
+.bootbox .btn-close:hover {
     color: var(--ui-text);
     opacity: 1;
 }
@@ -1252,19 +1252,19 @@ html[data-rec-theme="light"] #ui-devices-toggle { background: #fff; border-color
     .bt-device-dialog .bt-device-fields label:not(:first-child) { margin-top: 8px; }
 }
 
-/* Override Bootstrap Dark's .custom-select in the Bootbox device dialog. */
-html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select {
+/* Override Bootstrap Dark's .form-select in the Bootbox device dialog. */
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-select {
     color: #25384e;
     background-color: #fff;
     border-color: #b9c8da;
 }
-html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select:focus {
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-select:focus {
     color: #25384e;
     background-color: #fff;
     border-color: #69a7d9;
     box-shadow: 0 0 0 2px #69baff33;
 }
-html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.custom-select:disabled {
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-select:disabled {
     background-color: #edf2f7;
     color: #64778a;
 }
@@ -1338,3 +1338,29 @@ html[data-rec-theme="light"] .bt-mixer-panel { box-shadow: 0 10px 30px #152b4a33
 .bt-level-label { flex: 0 0 66px; white-space: nowrap; }
 .bt-level-row { min-width: 0; }
 .bt-level-track { min-width: 0; }
+
+/* Bootstrap 5 compatibility and compact controls. */
+.recorder-caption-language .form-select { background-size: 12px 10px; }
+#help-box .nav-tabs .nav-link { cursor: pointer; }
+#audio-format-selector .form-check { display: inline-flex; align-items: center; padding-left: 0; gap: 5px; margin-bottom: 0; }
+#audio-format-selector .form-check-input { margin: 0; float: none; position: static; }
+#audio-format-selector .form-check-label { cursor: pointer; }
+.bootbox .btn-close { opacity: .75; }
+html[data-rec-theme="dark"] .bootbox .btn-close { filter: invert(1) grayscale(100%); }
+html[data-rec-theme="light"] .bootbox .btn-close { filter: none; }
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-select { background-color: #fff; color: #25384e; border-color: #b9c8da; }
+html[data-rec-theme="light"] .bt-device-dialog .bt-device-fields select.form-select:disabled { background-color: #edf2f7; color: #64778a; }
+
+/* Form inputs inside the download area must not inherit the option-checkbox offsets. */
+.recorder-options-panel #audio-format-selector .form-check-input {
+    position: static;
+    inset: auto;
+    margin: 0;
+    float: none;
+}
+.recorder-options-panel #audio-format-selector .form-check-label { margin: 0; }
+/* Avoid Bootstrap 5's default blue focus glow in custom recorder controls. */
+.recorder-caption-language .form-select:focus {
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 2px #69baff33;
+}

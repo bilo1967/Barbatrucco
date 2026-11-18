@@ -4,6 +4,7 @@
     let theme = 'light';
     try { if (localStorage.getItem(KEY) === 'dark') theme = 'dark'; } catch (_) {}
     document.documentElement.setAttribute('data-rec-theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
     function init() {
         const toggle = document.getElementById('ui-theme-toggle');
         const stage = document.getElementById('rec-preview-stage');
@@ -11,7 +12,7 @@
         function updateButton() {
             if (!toggle) return;
             const light = document.documentElement.getAttribute('data-rec-theme') === 'light';
-            toggle.innerHTML = light ? '<i class="fas fa-moon" aria-hidden="true"></i>' : '<i class="fas fa-sun" aria-hidden="true"></i>';
+            toggle.innerHTML = light ? '<i class="bi bi-moon" aria-hidden="true"></i>' : '<i class="bi bi-sun" aria-hidden="true"></i>';
             toggle.setAttribute('aria-label', light ? 'Switch to dark theme / Passa al tema scuro' : 'Switch to light theme / Passa al tema chiaro');
             toggle.title = toggle.getAttribute('aria-label');
             toggle.setAttribute('aria-pressed', String(light));
@@ -19,6 +20,7 @@
         toggle?.addEventListener('click', () => {
             const next = document.documentElement.getAttribute('data-rec-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-rec-theme', next);
+            document.documentElement.setAttribute('data-bs-theme', next);
             try { localStorage.setItem(KEY, next); } catch (_) {}
             updateButton();
         });

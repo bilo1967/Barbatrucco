@@ -117,12 +117,12 @@
         ];
         const fields = labels.map(([kind, label]) =>
             '<label for="' + ids[kind] + '">' + label + '</label>' +
-            '<select class="custom-select custom-select-sm" id="' + ids[kind] + '"></select>'
+            '<select class="form-select form-select-sm" id="' + ids[kind] + '"></select>'
         ).join('');
         return '<div class="bt-device-heading">' +
             '<button type="button" class="bt-device-refresh" id="ui-devices-refresh" ' +
             'aria-label="' + BTI18n.text('device-refresh') + '" title="' +
-            BTI18n.text('device-refresh') + '"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>' +
+            BTI18n.text('device-refresh') + '"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i></button>' +
             '</div><div class="bt-device-fields">' + fields + '</div>' +
             '<p class="bt-device-note mb-0">' + BTI18n.text('device-note') + '</p>' +
             '<div id="ui-device-status" class="bt-device-status" role="status" aria-live="polite"></div>';

@@ -1,25 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" data-bs-theme="dark" xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-type" />
     <title>Mini Recorder</title>
 
-    <!-- Bootstrap 4 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@4.0.2/dist/css/bootstrap-dark.min.css" rel="stylesheet" />
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
     <!-- jQuery -->
-    <script crossorigin="anonymous" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.8.0.min.js" crossorigin="anonymous"></script>
 
-    <!-- Font Awesome -->
-    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" rel="stylesheet" />
-    <script crossorigin="anonymous" integrity="sha256-NP9NujdEzS5m4ZxvNqkcbxyHB0dTRy9hG13RwTVBGwo=" src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/fontawesome.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css" rel="stylesheet" crossorigin="anonymous" />
 
     <!-- Bootstrap -->
-    <script crossorigin="anonymous" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script crossorigin="anonymous" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <!-- Bootbox -->
-    <script src="js/bootbox.min.js"></script>
-    <!-- JS Cookie -->
+    <script src="js/bootbox.all.min.js?v=6.0.4"></script>
     <!-- Bilo's stuff -->
     <script src="js/utils.js?0.01"></script>
     <script src="js/mychrono.js"></script>
@@ -74,20 +71,7 @@
         z-index: 1;
       }
 
-      div.custom-control-right {
-        padding-right: 0px;
-        padding-left: 0;
-        margin-left: 16px;
-        margin-right: 0;
-      }
-
-      div.custom-control-right .custom-control-label::before,
-      div.custom-control-right .custom-control-label::after {
-        right: -1.5rem;
-        left: initial;
-      }
-
-      #rec-preview-stage {
+#rec-preview-stage {
         position: relative;
         display: inline-block;
         width: 80%;
@@ -209,22 +193,22 @@
         text-align: center;
       }
     </style>
-    <link href="css/recorder-theme.css?v=1.12" rel="stylesheet" />
+    <link href="css/recorder-theme.css?v=2.0" rel="stylesheet" />
     <!-- Modulo per il caricamento di FFmpeg.WASM -->
     <script src="js/loadFFmpeg.js" type="module"></script>
-    <script src="js/mediapipe-selfie.js?v=3.0"></script>
+    <script src="js/mediapipe-selfie.js?v=4.0"></script>
     <script src="js/webcam-pip.js?v=3.1"></script>
-    <script src="js/device-settings.js?v=1.1" defer></script>
-    <script src="js/recorder-appearance.js?v=1.2" defer></script>
+    <script src="js/device-settings.js?v=2.0" defer></script>
+    <script src="js/recorder-appearance.js?v=2.0" defer></script>
     <script src="js/i18n.js?v=4.2"></script>
     <script src="js/audio-mixer.js?v=1.0"></script>
-    <script src="js/barbatrucco.js?v=3.2"></script>
+    <script src="js/barbatrucco.js?v=4.0"></script>
   </head>
   <body>
     <!-- begin: container -->
     <div class="container-fluid">
       <div class="btn btn-outline-clear hidden" id="show-help-button">
-        <i class="fa fa-question"></i>
+        <i class="bi bi-question-lg"></i>
       </div>
       <!-- begin: row -->
       <div class="row recorder-page-row">
@@ -233,16 +217,16 @@
           <div class="recorder-caption">
             <span class="recorder-caption-title">MiniRecorder</span>
             <div class="recorder-caption-language">
-              <label class="sr-only" for="ui-language">Language / Lingua</label>
-              <select aria-label="Language / Lingua" class="custom-select custom-select-sm" id="ui-language">
+              <label class="visually-hidden" for="ui-language">Language / Lingua</label>
+              <select aria-label="Language / Lingua" class="form-select form-select-sm" id="ui-language">
                 <option value="en">English</option>
                 <option value="it">Italiano</option>
               </select>
               <button type="button" id="ui-theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
-                <i class="fas fa-sun" aria-hidden="true"></i>
+                <i class="bi bi-sun" aria-hidden="true"></i>
               </button>
               <button type="button" id="ui-devices-toggle" aria-haspopup="dialog" data-i18n-title="device-settings-title" data-i18n-aria-label="device-settings-title" title="Device settings" aria-label="Device settings">
-                <i class="fas fa-cog" aria-hidden="true"></i>
+                <i class="bi bi-gear" aria-hidden="true"></i>
               </button>
             </div>
           </div>
@@ -252,7 +236,7 @@
                 <video class="border rounded" height="280" id="mangiacassette" playsinline=""></video>
                 <div id="rec-idle-art" aria-hidden="true"></div>
                 <div class="rec-duration-overlay" data-i18n-title="duration" title="Duration">
-                  <i class="far fa-clock" aria-hidden="true"></i>
+                  <i class="bi bi-clock" aria-hidden="true"></i>
                   <span id="timer">00:00:00</span>
                 </div>
                 <div aria-label="Drag to move the webcam" data-i18n-aria-label="webcam-frame" hidden="" id="webcam-frame">
@@ -283,7 +267,7 @@
                   <button class="btn btn-sm btn-success disabled" id="rec-resume">Resume</button>
                   <button class="btn btn-sm btn-success disabled" id="rec-stop">Stop</button>
                   <button class="btn btn-sm btn-info disabled" data-i18n-title="silenzia-microfono" disabled="" id="silenzia-microfono" style="width:3rem" title="Mute/unmute microphone">
-                    <i aria-hidden="true" class="fa fa-microphone"></i>
+                    <i aria-hidden="true" class="bi bi-mic-fill"></i>
                   </button>
                   <button class="btn btn-sm btn-warning disabled" data-i18n-title="voiceover" disabled="" id="voiceover" title="Hold to lower the source audio while speaking. You can also hold the space bar. Only the recording is affected.">Voice over</button>
                 </div>
@@ -319,7 +303,7 @@
               </div>
               <div class="bt-mixer-area">
                 <button type="button" class="bt-mixer-button" id="bt-mixer-toggle" aria-expanded="false" aria-controls="bt-mixer-panel" data-i18n-title="mixer-title" title="Recording volume">
-                  <i class="fas fa-sliders-h" aria-hidden="true"></i> <span data-i18n="mixer-title">Recording volume</span>
+                  <i class="bi bi-sliders" aria-hidden="true"></i> <span data-i18n="mixer-title">Recording volume</span>
                 </button>
                 <div class="bt-mixer-panel" id="bt-mixer-panel" hidden>
                   <div class="bt-mixer-field">
@@ -338,21 +322,21 @@
               </div>
               <div class="recorder-download-panel">
                 <a class="mt-2 btn btn-outline-clear disabled" id="rec-download">
-                  <i aria-hidden="true" class="fa fa-download"></i>
+                  <i aria-hidden="true" class="bi bi-download"></i>
                   <span data-i18n="download-recording">Download recording</span>
                 </a>
                 <a class="mt-2 btn btn-outline-clear disabled" id="mic-download" style="display:none">
-                  <i aria-hidden="true" class="fa fa-download"></i>
+                  <i aria-hidden="true" class="bi bi-download"></i>
                   <span data-i18n="download-mic">Download mic</span>
                 </a>
                 <div class="mt-2 d-flex justify-content-center" id="audio-format-selector">
-                  <div class="custom-control custom-checkbox">
-                    <input checked="" class="custom-control-input" id="audio-format-mp3" name="audio-format" type="radio" value="mp3" />
-                    <label class="custom-control-label" for="audio-format-mp3">MP3</label>
+                  <div class="form-check">
+                    <input checked="" class="form-check-input" id="audio-format-mp3" name="audio-format" type="radio" value="mp3" />
+                    <label class="form-check-label" for="audio-format-mp3">MP3</label>
                   </div>
-                  <div class="ml-2 custom-control custom-checkbox">
-                    <input class="custom-control-input" id="audio-format-m4a" name="audio-format" type="radio" value="m4a" />
-                    <label class="custom-control-label" for="audio-format-m4a">M4A</label>
+                  <div class="ms-2 form-check">
+                    <input class="form-check-input" id="audio-format-m4a" name="audio-format" type="radio" value="m4a" />
+                    <label class="form-check-label" for="audio-format-m4a">M4A</label>
                   </div>
                 </div>
               </div>
@@ -379,9 +363,9 @@
                 <li class="nav-item">
                   <a aria-controls="informazioni" aria-selected="false" class="nav-link" data-i18n="help-about" href="#informazioni" role="tab">About</a>
                 </li>
-                <li class="nav-item ml-auto">
+                <li class="nav-item ms-auto">
                   <button class="btn btn-sm btn-outline-clear" id="hide-help-button" role="tab">
-                    <i class="fa fa-times"></i>
+                    <i class="bi bi-x-lg"></i>
                   </button>
                 </li>
               </ul>
@@ -498,7 +482,7 @@
                   <div data-language="en">
                     <h5>About</h5>
                     <ul>
-                      <li>Created by Gabriele Carioli for the Department of Interpreting and Translation, University of Bologna. Free, open-source software under the MIT license.</li>
+                      <li>Created by Gabriele Carioli for the Department of Interpreting and Translation, University of Bologna. Free, open-source software under the GPL-3.0-or-later license.</li>
                       <li>You are responsible for how you use this application, including compliance with copyright.</li>
                       <li>Preferences are saved in this browser with localStorage; no application cookies are needed.</li>
                       <li>Recording and conversion take place in your browser. Media files are not uploaded to this application’s server. Optional MediaPipe libraries and model files are downloaded from third-party hosting.</li>
@@ -509,7 +493,7 @@
                   <div data-language="it">
                     <h5>Informazioni</h5>
                     <ul>
-                      <li>Realizzato da Gabriele Carioli per il Dipartimento di Interpretazione e Traduzione dell’Università di Bologna. Software gratuito e open source con licenza MIT.</li>
+                      <li>Realizzato da Gabriele Carioli per il Dipartimento di Interpretazione e Traduzione dell’Università di Bologna. Software gratuito e open source con licenza GPL-3.0-or-later.</li>
                       <li>Sei responsabile dell’utilizzo dell’applicazione, incluso il rispetto del diritto d’autore.</li>
                       <li>Le preferenze vengono salvate nel browser tramite localStorage; non servono cookie applicativi.</li>
                       <li>Registrazioni e conversioni avvengono nel browser. I file multimediali non vengono caricati sul server dell’applicazione. Le librerie MediaPipe e il modello opzionali vengono scaricati da servizi esterni.</li>

@@ -668,7 +668,7 @@ $(document).ready(async function() {
                 } else {
                     $('#silenzia-microfono').removeClass('disabled');
                     $('#silenzia-microfono').prop('disabled', false);
-                    $('#silenzia-microfono > i').removeClass('fa-microphone-slash').addClass('fa-microphone');
+                    $('#silenzia-microfono > i').removeClass('bi-mic-mute-fill').addClass('bi-mic-fill');
                 }
             }
             // Disabilita la selezione del microfono
@@ -986,7 +986,7 @@ $(document).ready(async function() {
 
     $('#istruzioni-list a').on('click', function (e) {
         e.preventDefault();
-        $(this).tab('show');
+        bootstrap.Tab.getOrCreateInstance(this).show();
     })
 
     $('#silenzia-microfono').on('click', function() {
@@ -996,7 +996,7 @@ $(document).ready(async function() {
         if (streamMicrofono.getAudioTracks()[0].enabled) {
             // Mute
             streamMicrofono.getAudioTracks()[0].enabled = false;
-            $('#silenzia-microfono > i').removeClass('fa-microphone').addClass('fa-microphone-slash');
+            $('#silenzia-microfono > i').removeClass('bi-mic-fill').addClass('bi-mic-mute-fill');
             $('#voiceover').addClass('disabled');
             $('#voiceover').prop('disabled', 'disabled');
         } else {
@@ -1007,7 +1007,7 @@ $(document).ready(async function() {
                 $('#voiceover').removeClass('disabled');
                 $('#voiceover').prop('disabled', false);
             } else {
-                $('#silenzia-microfono > i').removeClass('fa-microphone-slash').addClass('fa-microphone');
+                $('#silenzia-microfono > i').removeClass('bi-mic-mute-fill').addClass('bi-mic-fill');
             }
 
         }

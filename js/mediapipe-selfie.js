@@ -14,8 +14,8 @@ class SelfieCutout {
     }
     async load() {
         if (this.segmenter) return;
-        const { FilesetResolver, ImageSegmenter } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15');
-        const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/wasm');
+        const { FilesetResolver, ImageSegmenter } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3');
+        const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm');
         // The model identifies background (0) and person (1).
         this.segmenter = await ImageSegmenter.createFromOptions(vision, {
             baseOptions: {
