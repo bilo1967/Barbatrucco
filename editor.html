@@ -67,10 +67,11 @@
       }
 
       .top {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: center;
-        justify-content: space-between;
-        gap: 8px
+        gap: 12px;
+        min-height: 152px
       }
 
       .top h1 {
@@ -82,7 +83,8 @@
       .top .file-controls {
         display: flex;
         gap: 8px;
-        align-items: center
+        align-items: center;
+        justify-self: end
       }
 
       .filename {
@@ -99,10 +101,10 @@
       }
 
       .preview {
-        height: clamp(100px, 18vh, 155px);
-        max-width: 290px;
-        width: 100%;
-        align-self: center;
+        height: 150px;
+        width: 270px;
+        max-width: min(270px, 40vw);
+        justify-self: center;
         background: #070d15;
         border: 1px solid var(--line);
         border-radius: 9px;
@@ -210,7 +212,7 @@
 
       .wave-box {
         position: relative;
-        height: 210px;
+        height: 182px;
         touch-action: pan-y;
         cursor: grab;
         user-select: none;
@@ -457,13 +459,22 @@
           gap: 9px
         }
 
+        .top {
+          grid-template-columns: 1fr auto;
+          min-height: 0
+        }
+
         .preview {
-          height: 115px;
-          max-width: 215px
+          grid-column: 1 / -1;
+          grid-row: 2;
+          height: 130px;
+          width: 230px;
+          max-width: 100%;
+          margin: auto
         }
 
         .wave-box {
-          height: 175px
+          height: 150px
         }
 
         .markers {
@@ -485,6 +496,66 @@
         }
       }
 
+      /* Introductory help uses the editor's current light/dark palette. */
+      .editor-intro {
+        width: min(590px, calc(100vw - 32px));
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--text);
+        background: var(--panel);
+        box-shadow: 0 12px 50px #0008
+      }
+
+      .editor-intro::backdrop {
+        background: #080e17aa
+      }
+
+      .intro-content {
+        padding: 22px 24px
+      }
+
+      .intro-content h2 {
+        font-size: 19px;
+        margin-bottom: 14px
+      }
+
+      .intro-content p {
+        margin: 12px 0
+      }
+
+      .intro-markers {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        margin: 14px 0
+      }
+
+      .intro-demo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+        cursor: default
+      }
+
+      .intro-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 22px
+      }
+
+      .intro-never {
+        display: flex;
+        align-items: center;
+        gap: 8px
+      }
+
       #embedded-close[hidden],
       #file-picker-label[hidden],
       #theme-toggle[hidden] {
@@ -494,17 +565,31 @@
   </head>
   <body>
     <main class="editor">
+      <!-- Compact header with a horizontally centered video preview. -->
       <header class="top">
         <h1><i class="bi bi-scissors"></i> Video trimmer</h1>
-        <div class="file-controls"><button id="theme-toggle" class="btn btn-sm btn-outline-secondary" type="button" title="Alterna tema chiaro/scuro" aria-label="Alterna tema chiaro/scuro"><i class="bi bi-sun"></i></button><button id="embedded-close" class="btn btn-sm btn-outline-secondary" type="button" hidden aria-label="Chiudi editor" title="Chiudi"><i class="bi bi-x-lg"></i></button><label id="file-picker-label" class="btn btn-sm btn-outline-info mb-0" for="file"><i class="bi bi-folder2-open"></i> Apri WebM</label><input id="file" type="file" accept=".webm,video/webm,audio/webm" hidden></div>
-      </header>
-      <section id="preview" class="preview no-video" aria-label="Anteprima"><video id="video" playsinline preload="auto"></video>
-        <div class="placeholder" id="placeholder"><i class="bi bi-film fs-1"></i>
-          <div>Carica un WebM per iniziare</div>
+        <section id="preview" class="preview no-video" aria-label="Anteprima">
+          <video id="video" playsinline preload="auto"></video>
+          <div class="placeholder" id="placeholder">
+            <i class="bi bi-film fs-1"></i>
+            <div>Carica un WebM per iniziare</div>
+          </div>
+          <div id="shade" class="preview-shade"></div>
+          <div class="drag-clock" id="drag-clock">00:00:00.0</div>
+        </section>
+        <div class="file-controls">
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary" type="button" title="Alterna tema chiaro/scuro" aria-label="Alterna tema chiaro/scuro">
+            <i class="bi bi-sun"></i>
+          </button>
+          <button id="embedded-close" class="btn btn-sm btn-outline-secondary" type="button" hidden aria-label="Chiudi editor" title="Chiudi">
+            <i class="bi bi-x-lg"></i>
+          </button>
+          <label id="file-picker-label" class="btn btn-sm btn-outline-info mb-0" for="file">
+            <i class="bi bi-folder2-open"></i> Apri WebM
+          </label>
+          <input id="file" type="file" accept=".webm,video/webm,audio/webm" hidden>
         </div>
-        <div id="shade" class="preview-shade"></div>
-        <div class="drag-clock" id="drag-clock">00:00:00.0</div>
-      </section>
+      </header>
       <section class="time-line"><span>Posizione</span><strong id="clock">00:00:00.0</strong><span id="total">Totale 00:00:00.0</span></section>
       <section class="wave-section">
         <div class="wave-head"><span>Forma d'onda — trascina per scorrere, rilascia per aggiornare il video</span>
@@ -523,23 +608,61 @@
         </div>
         <div class="ticks"><span>Verde: inizio · arancio: fine · bianco: testina</span><span id="zoom-hint">15 secondi visibili</span></div>
       </section>
-      <section class="markers"><button class="btn btn-outline-success mark-btn" id="set-start" disabled><i class="bi bi-hand-index"></i> Inizio <small id="start-value">—</small></button>
+      <section class="markers"><button class="btn btn-outline-success mark-btn" id="set-start" disabled><i class="bi bi-hand-index-thumb"></i> Inizio <small id="start-value">—</small></button>
         <div class="player-mode" id="player-mode" data-play-mode="normal"><button class="btn btn-primary btn-play" id="play" disabled title="Play/Pausa (spazio)"><i id="play-icon" class="bi bi-play-fill"></i></button>
           <div class="mode-options">
             <div class="mode-choice mode-choice-normal"><label><input type="radio" name="mode" value="normal" checked> Normale</label></div>
             <div class="mode-choice mode-choice-interval"><label><input type="radio" name="mode" value="interval"> Intervallo</label><label class="interval-size" for="interval">± <input type="number" class="form-control form-control-sm" id="interval" min="0.5" max="10" step="0.5" value="2.0"> s</label></div>
           </div>
-        </div><button class="btn btn-outline-warning mark-btn" id="set-end" disabled><i class="bi bi-hand-index-fill"></i> Fine <small id="end-value">—</small></button>
+        </div><button class="btn btn-outline-warning mark-btn" id="set-end" disabled><i class="bi bi-hand-index-thumb-fill"></i> Fine <small id="end-value">—</small></button>
       </section>
       <div class="hint">Scorrimento: trascina la forma d'onda. <kbd>←</kbd>/<kbd>→</kbd> ±0,1 s · <kbd>Shift</kbd> ±1 s · <kbd>Spazio</kbd> Play/Pausa · <kbd>I</kbd> Inizio · <kbd>O</kbd> Fine.</div>
       <footer class="bottom"><span class="status" id="status" role="status">In attesa del file.</span>
         <div class="actions"><button class="btn btn-sm btn-outline-secondary" id="reset" disabled>Ripristina</button><button class="btn btn-sm btn-success" id="confirm" disabled><i class="bi bi-check-lg"></i> Conferma punti</button></div>
       </footer>
     </main>
+    <!-- First-use introduction. Clicking outside or OK closes this dialog. -->
+    <dialog id="editor-intro" class="editor-intro" aria-labelledby="editor-intro-title">
+      <div class="intro-content">
+        <h2 id="editor-intro-title">Video trimmer</h2>
+        <div data-intro-language="it" hidden>
+          <p>Scorri la clip avanti e indietro trascinando la forma d'onda e seleziona:</p>
+          <div class="intro-markers">
+            <span>Il punto di inizio premendo</span>
+            <span class="btn btn-outline-success intro-demo"><i class="bi bi-hand-index-thumb"></i> Inizio</span>
+            <span>e/o il punto di fine premendo</span>
+            <span class="btn btn-outline-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> Fine</span>
+          </div>
+          <p>Premi <b>Play</b> per ascoltare. La modalità <b>Intervallo</b> ripete una breve parte intorno alla testina. Usa la rotella del mouse per lo zoom, le frecce per spostarti di 0,1 secondi e <kbd>Spazio</kbd> per Play/Pausa.</p>
+          <p>Infine premi <b>Applica taglio</b>. La registrazione viene elaborata nel browser, senza upload.</p>
+        </div>
+        <div data-intro-language="en">
+          <p>Drag the waveform backward or forward to navigate, then choose:</p>
+          <div class="intro-markers">
+            <span>The starting point with</span>
+            <span class="btn btn-outline-success intro-demo"><i class="bi bi-hand-index-thumb"></i> Start</span>
+            <span>and/or the ending point with</span>
+            <span class="btn btn-outline-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> End</span>
+          </div>
+          <p>Press <b>Play</b> to listen. <b>Interval</b> mode repeats a short segment around the playhead. Use the mouse wheel to zoom, arrows to move in 0.1 second steps, and <kbd>Space</kbd> to play or pause.</p>
+          <p>Finally click <b>Apply trim</b>. Processing runs locally in the browser.</p>
+        </div>
+        <div class="intro-footer">
+          <label class="intro-never">
+            <input type="checkbox" id="intro-never">
+            <span data-intro-language="it" hidden>Non mostrare più</span>
+            <span data-intro-language="en">Don't show again</span>
+          </label>
+          <button type="button" class="btn btn-primary" id="intro-ok">OK</button>
+        </div>
+      </div>
+    </dialog>
     <script>
       (() => {
         'use strict';
+        // Find an editor control by its id.
         const $ = id => document.getElementById(id);
+        // Map user-facing Italian labels to English.
         const translations = [
             ["Nessun file", "No file"],
             ["Alterna tema chiaro/scuro", "Switch light/dark theme"],
@@ -595,28 +718,38 @@
           itToEn = new Map(translations),
           enToIt = new Map(translations.map(([it, en]) => [en, it]));
         let currentLang = 'en';
+        // Translate a short message into the active language.
         const tr = (it, en) => currentLang === 'it' ? it : (en || itToEn.get(it) || it);
 
+        // Translate static DOM text and accessible labels.
         function localizeDOM() {
+          // Prepare map for the current operation.
           const map = currentLang === 'it' ? enToIt : itToEn,
             walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
           let n;
           while ((n = walker.nextNode())) {
+            // Prepare m for the current operation.
             const m = n.textContent.match(/^(\s*)(.*?)(\s*)$/s);
             if (m && map.has(m[2])) n.textContent = m[1] + map.get(m[2]) + m[3];
           }
           document.querySelectorAll('[title],[aria-label]').forEach(el => {
             for (const key of ['title', 'aria-label']) {
+              // Prepare v for the current operation.
               const v = el.getAttribute(key);
               if (map.has(v)) el.setAttribute(key, map.get(v));
             }
           });
         }
 
+        // Apply the selected language to the editor and help.
         function setLanguage(lang) {
           currentLang = lang === 'it' ? 'it' : 'en';
           document.documentElement.lang = currentLang;
           localizeDOM();
+          // The introduction has distinct Italian and English explanations.
+          document.querySelectorAll('[data-intro-language]').forEach(el => {
+            el.hidden = el.dataset.introLanguage !== currentLang;
+          });
           if (sourceFile) {
             $('total').textContent = tr('Totale ', 'Total ') + format(duration);
             refreshMarks();
@@ -624,22 +757,27 @@
           } else status(tr('In attesa del file.', 'Waiting for file.'));
         }
 
+        // Apply the parent application theme.
         function setTheme(theme) {
           document.documentElement.setAttribute('data-bs-theme', theme === 'light' ? 'light' : 'dark');
           updateTheme();
         }
 
+        // Synchronize editor preferences with Barbatrucco.
         function applySettings(data) {
           if (data?.lang) setLanguage(data.lang);
           if (data?.theme) setTheme(data.theme);
         }
+        // Cache the video element and preview references.
         const video = $('video'),
           preview = $('preview'),
           clock = $('clock'),
           dragClock = $('drag-clock');
+        // Cache the waveform canvas, context and viewport.
         const canvas = $('wave'),
           ctx = canvas.getContext('2d'),
           viewport = $('wave-box');
+        // Read the currently selected playback mode.
         const mode = () => document.querySelector('input[name=mode]:checked').value;
         let fileUrl = null,
           sourceFile = null,
@@ -655,18 +793,24 @@
           raf = 0,
           audioContext = null,
           loadToken = 0;
+        // Restrict a numeric value to a valid range.
         const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+        // Round a timestamp to a tenth of a second.
         const roundTenth = t => Math.round(t * 10) / 10;
+        // Format a timestamp for the UI.
         const format = (t, decimals = true) => {
           t = Math.max(0, Number(t) || 0);
+          // Prepare h for the current operation.
           const h = Math.floor(t / 3600),
             m = Math.floor(t / 60) % 60,
             s = t % 60;
           return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + (decimals ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0'));
         };
+        // Update the editor status message.
         const status = s => $('status').textContent = currentLang === 'en' ? (itToEn.get(s) || s) : s;
         let processing = false;
 
+        // Disable editing controls and show processing feedback.
         function setProcessing(value) {
           processing = value;
           $('confirm').disabled = value || !sourceFile;
@@ -678,12 +822,16 @@
           $('reset').disabled = value || !sourceFile;
         }
 
+        // Calculate the short interval around the playhead.
         function intervalBounds() {
+          // Read the radius of an interval preview.
           const radius = clamp(Number($('interval').value) || 2, .5, 10);
+          // Preserve the reference point during interval playback.
           const origin = playback?.type === 'interval' ? playback.origin : position;
           return [Math.max(0, origin - radius), Math.min(duration, origin + radius)];
         }
 
+        // Choose a readable timeline ruler spacing.
         function rulerStep() {
           // About five to ten readable labels across the viewport.
           for (const n of [.5, 1, 2, 5, 10, 15, 30, 60, 120])
@@ -691,6 +839,7 @@
           return 300;
         }
 
+        // Update the playback mode color and keyboard focus.
         function updatePlayMode() {
           $('player-mode').dataset.playMode = mode();
           if (document.activeElement?.matches('input[name="mode"]')) viewport.focus({
@@ -699,16 +848,20 @@
           draw();
         }
 
+        // Refresh the theme toggle and waveform palette.
         function updateTheme() {
+          // Detect which visual theme is active.
           const light = document.documentElement.getAttribute('data-bs-theme') === 'light';
           $('theme-toggle').innerHTML = '<i class="bi bi-' + (light ? 'moon-stars' : 'sun') + '"></i>';
           draw();
         }
 
+        // Return the effective start and end of the selection.
         function selection() {
           return [start ?? 0, end ?? duration];
         }
 
+        // Move the playhead, optionally seeking the media.
         function setPosition(t, seek = true) {
           position = roundTenth(clamp(t, 0, duration));
           clock.textContent = format(position);
@@ -726,6 +879,7 @@
           draw();
         }
 
+        // Update trim markers and selected duration.
         function refreshMarks() {
           $('start-value').textContent = start === null ? '—' : format(start);
           $('end-value').textContent = end === null ? '—' : format(end);
@@ -734,8 +888,10 @@
           draw();
         }
 
+        // Store a start or end marker at the current time.
         function mark(which) {
           if (!sourceFile) return;
+          // Read the current playback timestamp.
           const time = roundTenth(video.paused ? position : video.currentTime);
           if (which === 'start') {
             if (end !== null && time >= end) {
@@ -754,25 +910,32 @@
           status((which === 'start' ? tr('Inizio', 'Start') : tr('Fine', 'End')) + tr(' impostato a ', ' set at ') + format(time));
         }
 
+        // Restore full audio volume and remove preview shading.
         function restoreAudio() {
           video.volume = 1;
           $('shade').style.opacity = 0;
         }
 
+        // Dim and attenuate parts excluded from the trim.
         function applyTrimPreview(time) {
           const [a, b] = selection();
+          // Identify media outside the chosen trim segment.
           const excluded = (start !== null && time < a) || (end !== null && time > b);
+          // Choose the preview audio volume.
           const target = excluded ? .17 : 1;
           video.volume += clamp(target - video.volume, -.08, .08);
           $('shade').style.opacity = excluded ? '.68' : '0';
         }
 
+        // Match the playback button icon to the video state.
         function updatePlayIcon() {
           $('play-icon').className = 'bi bi-' + (video.paused ? 'play-fill' : 'pause-fill');
         }
 
+        // Stop playback and optionally return to interval origin.
         function stopPlayback(returnToOrigin = false) {
           if (playback && returnToOrigin && playback.type === 'interval') {
+            // Preserve the reference point during interval playback.
             const origin = playback.origin;
             playback = null;
             video.pause();
@@ -785,12 +948,14 @@
           restoreAudio();
           updatePlayIcon();
         }
+        // Start or pause normal or interval playback.
         async function playToggle() {
           if (!sourceFile || drag) return;
           if (!video.paused) {
             stopPlayback(true);
             return;
           }
+          // Select the current playback behavior.
           const chosen = mode();
           if (chosen === 'normal') {
             playback = {
@@ -798,6 +963,7 @@
             };
             video.currentTime = Math.min(duration, position);
           } else {
+            // Read the radius of an interval preview.
             const radius = clamp(Number($('interval').value) || 2, .5, 10);
             $('interval').value = radius.toFixed(1);
             playback = {
@@ -817,13 +983,16 @@
           }
         }
 
+        // Advance the playhead during video playback.
         function tick() {
           cancelAnimationFrame(raf);
+          // Prepare step for the current operation.
           const step = () => {
             if (video.paused) {
               updatePlayIcon();
               return;
             }
+            // Prepare t for the current operation.
             const t = video.currentTime;
             if (playback && playback.type === 'interval' && t >= playback.stop - .025) {
               stopPlayback(true);
@@ -838,7 +1007,9 @@
           raf = requestAnimationFrame(step);
         }
 
+        // Resize the canvas for its actual display dimensions.
         function resizeCanvas() {
+          // Prepare dpr for the current operation.
           const dpr = Math.min(2, window.devicePixelRatio || 1),
             rect = viewport.getBoundingClientRect();
           canvas.width = Math.max(1, Math.round(rect.width * dpr));
@@ -846,22 +1017,29 @@
           draw();
         }
 
+        // Render ruler, waveform, trim markers and interval shading.
         function draw() {
           if (!ctx || !canvas.width) return;
+          // Prepare w for the current operation.
           const w = canvas.width,
             h = canvas.height,
             dpr = w / Math.max(1, viewport.clientWidth);
           ctx.clearRect(0, 0, w, h);
+          // Prepare theme for the current operation.
           const theme = getComputedStyle(document.documentElement);
+          // Resolve a theme color for canvas drawing.
           const palette = v => theme.getPropertyValue(v).trim();
           ctx.fillStyle = palette('--wave-bg');
           ctx.fillRect(0, 0, w, h);
+          // Translate seconds into horizontal canvas pixels.
           const pxPerSecond = w / zoom,
             center = w / 2,
             mid = h / 2;
           const [a, b] = selection();
+          // Determine the visible timeline range.
           const lo = position - zoom / 2,
             hi = position + zoom / 2;
+          // Choose a readable ruler interval.
           const rStep = rulerStep();
           ctx.lineWidth = dpr * .8;
           ctx.textAlign = 'center';
@@ -869,6 +1047,7 @@
           ctx.strokeStyle = palette('--wave-ruler');
           ctx.fillStyle = palette('--wave-ruler');
           for (let t = Math.ceil(Math.max(0, lo) / rStep) * rStep; t <= Math.min(duration, hi) + .0001; t += rStep) {
+            // Convert time or pointer position into canvas coordinates.
             const x = center + (t - position) * pxPerSecond;
             ctx.globalAlpha = .22;
             ctx.beginPath();
@@ -883,7 +1062,9 @@
           // Interval preview: a subtle highlighted window and two distinct boundaries.
           if (mode() === 'interval' && sourceFile) {
             const [from, to] = intervalBounds();
+            // Prepare x1 for the current operation.
             const x1 = clamp(center + (from - position) * pxPerSecond, 0, w);
+            // Prepare x2 for the current operation.
             const x2 = clamp(center + (to - position) * pxPerSecond, 0, w);
             ctx.fillStyle = 'rgba(107,196,244,.095)';
             if (x2 > x1) ctx.fillRect(x1, 17 * dpr, x2 - x1, h - 17 * dpr);
@@ -899,27 +1080,39 @@
           // Fixed time-grid bars: amplitudes are aggregated over every bar's full time
           // interval, independent of scrolling position. This avoids the apparent
           // waveform morphing caused by sampling a single 100 ms bucket per pixel bar.
+          // Derive suitable bar resolution for the zoom level.
           const desiredStep = zoom / (Math.max(1, viewport.clientWidth) / 5);
+          // Prepare intervals for the current operation.
           const intervals = [.1, .2, .5, 1, 2, 5, 10];
+          // Determine the fixed time step of the waveform bars.
           const barSeconds = intervals.find(n => n >= desiredStep) || 10;
+          // Prepare pixelsPerBar for the current operation.
           const pixelsPerBar = barSeconds * pxPerSecond;
+          // Prepare barWidth for the current operation.
           const barWidth = Math.max(1 * dpr, Math.min(4 * dpr, pixelsPerBar * .67));
+          // Prepare first for the current operation.
           const first = Math.max(0, Math.floor(lo / barSeconds));
+          // Prepare last for the current operation.
           const last = Math.min(Math.ceil(duration / barSeconds), Math.ceil(hi / barSeconds));
           for (let k = first; k <= last; k++) {
+            // Prepare t for the current operation.
             const t = k * barSeconds,
               next = Math.min(duration, (k + 1) * barSeconds);
             if (next <= t || t > duration) continue;
+            // Convert time or pointer position into canvas coordinates.
             const x = center + (t + barSeconds * .5 - position) * pxPerSecond;
             if (x < -barWidth || x > w + barWidth) continue;
             let amp = peaks ? 0 : .035;
             if (peaks) {
+              // Locate the first sample covered by this bar.
               const i0 = clamp(Math.floor(t * 10), 0, peaks.length);
+              // Prepare i1 for the current operation.
               const i1 = clamp(Math.ceil(next * 10), i0 + 1, peaks.length);
               let sum = 0,
                 maximum = 0,
                 count = 0;
               for (let i = i0; i < i1; i++) {
+                // Prepare v for the current operation.
                 const v = peaks[i] || 0;
                 sum += v * v;
                 maximum = Math.max(maximum, v);
@@ -928,9 +1121,11 @@
               if (count) amp = Math.sqrt(sum / count) * .75 + maximum * .25;
             }
             // Linear display scale; 95th-percentile amplitude fills 80% of the canvas.
+            // Scale the visual bar height without changing audio.
             const barHeight = clamp(amp * waveGain * h * .80, 2 * dpr, h * .80);
             ctx.fillStyle = t < a || t >= b ? palette('--wave-muted') : palette('--accent');
             ctx.beginPath();
+            // Place the bar around its centered timeline position.
             const bx = x - barWidth * .5;
             if (ctx.roundRect) ctx.roundRect(bx, mid - barHeight / 2, barWidth, barHeight, barWidth / 2);
             else ctx.rect(bx, mid - barHeight / 2, barWidth, barHeight);
@@ -940,7 +1135,9 @@
               [0, a],
               [b, duration]
             ]) {
+            // Prepare left for the current operation.
             const left = clamp(center + (from - position) * pxPerSecond, 0, w);
+            // Prepare right for the current operation.
             const right = clamp(center + (to - position) * pxPerSecond, 0, w);
             if (right > left) {
               ctx.fillStyle = palette('--wave-shade');
@@ -952,6 +1149,7 @@
               [end, '#ffbd74']
             ]) {
             if (t === null) continue;
+            // Convert time or pointer position into canvas coordinates.
             const x = center + (t - position) * pxPerSecond;
             if (x < 0 || x > w) continue;
             ctx.fillStyle = color;
@@ -968,6 +1166,7 @@
           ctx.globalAlpha = 1;
         }
 
+        // Begin navigating by dragging the waveform.
         function beginDrag(e) {
           if (!sourceFile || e.button !== 0) return;
           stopPlayback(false);
@@ -983,14 +1182,18 @@
           e.preventDefault();
         }
 
+        // Update the playhead while dragging the waveform.
         function dragMove(e) {
           if (!drag || e.pointerId !== drag.id) return;
+          // Measure pointer or wheel movement.
           const delta = e.clientX - drag.x;
           if (Math.abs(delta) > 1) drag.moved = true;
+          // Convert horizontal movement into time.
           const seconds = delta / Math.max(1, viewport.clientWidth) * zoom;
           setPosition(drag.origin - seconds, false);
         }
 
+        // Complete a drag and update the video frame.
         function endDrag(e) {
           if (!drag || e.pointerId !== drag.id) return;
           dragMove(e);
@@ -1002,24 +1205,32 @@
             video.currentTime = position;
           }
         }
+        // Calculate fixed-interval RMS amplitudes for display.
         async function makePeaks(file, token) {
           peaks = null;
           draw();
           status('Analisi della forma d’onda in corso…');
           // A standalone UX prototype: full WebAudio decode. Large recordings may need
           // chunked extraction in the integrated implementation.
+          // Read recording bytes for local audio analysis.
           const array = await file.arrayBuffer();
+          // Create a temporary Web Audio decoding context.
           const ac = new(window.AudioContext || window.webkitAudioContext)();
           audioContext = ac;
           try {
+            // Decode the recording into channel samples.
             const decoded = await ac.decodeAudioData(array);
             if (token !== loadToken) return;
+            // Count samples or bins in the current range.
             const count = Math.max(1, Math.ceil(decoded.duration * 10));
+            // Store the decimated waveform amplitudes.
             const result = new Float32Array(count),
               ch = [];
             for (let c = 0; c < decoded.numberOfChannels; c++) ch.push(decoded.getChannelData(c));
+            // Choose the amount of audio in each RMS bin.
             const per = Math.max(1, Math.floor(decoded.sampleRate / 10));
             for (let k = 0; k < count; k++) {
+              // Determine the visible timeline range.
               const lo = k * per,
                 hi = Math.min(decoded.length, lo + per);
               let sum = 0,
@@ -1033,10 +1244,12 @@
               result[k] = n ? Math.sqrt(sum / n) : 0;
             }
             peaks = result;
+            // Ignore silent bins when estimating the global scale.
             const nonZero = Array.from(result).filter(v => v > 0).sort((a, b) => a - b);
             // A robust global reference: the 95th percentile of RMS bins.
             // A rare loud peak cannot flatten the rest of the waveform.
             // This display-only gain stays fixed across every zoom and scroll.
+            // Select a robust global reference amplitude.
             const reference = nonZero.length ? nonZero[Math.floor((nonZero.length - 1) * .95)] : 0;
             waveGain = reference > 0 ? 1 / reference : 1;
             draw();
@@ -1046,8 +1259,10 @@
             await ac.close().catch(() => {});
           }
         }
+        // Load local WebM media and build its waveform.
         async function openFile(file, displayName) {
           if (!file) return;
+          // Discard obsolete asynchronous file operations.
           const token = ++loadToken;
           stopPlayback(false);
           sourceFile = file;
@@ -1065,6 +1280,7 @@
           $('play').disabled = false;
           $('set-start').disabled = false;
           $('set-end').disabled = false;
+          // Choose between video preview and audio placeholder.
           const hasVideo = file.type.startsWith('video/') || (/\.webm$/i.test(file.name));
           preview.classList.toggle('no-video', !hasVideo);
           status('Apertura file…');
@@ -1093,31 +1309,45 @@
             if (token === loadToken) status(tr('Errore: ', 'Error: ') + e.message);
           }
         }
-        $('file').addEventListener('change', e => openFile(e.target.files[0]));
+        // Open a local WebM and show the introductory instructions when needed.
+        $('file').addEventListener('change', e => {
+          if (!e.target.files[0]) return;
+          openFile(e.target.files[0]);
+          showIntroduction();
+        });
+        // Update the displayed zoom when the selector changes.
         $('zoom').addEventListener('change', e => {
           zoom = Number(e.target.value) || 15;
           setPosition(position, false);
         });
+        // List the supported timeline zoom levels.
         const zoomLevels = [2.5, 5, 10, 15, 30, 60, 300];
         let wheelAccum = 0,
           wheelDirection = 0,
           lastWheelStep = 0;
+        // Change zoom with the mouse wheel only over the waveform.
         viewport.addEventListener('wheel', e => {
           // Ctrl+wheel is conventionally used for browser zoom; do not override it.
           if (e.ctrlKey || e.metaKey) return;
           e.preventDefault(); // Only the waveform uses the wheel; elsewhere the page scrolls.
+          // Measure pointer or wheel movement.
           const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
           if (!delta) return;
+          // Determine whether the wheel zooms in or out.
           const direction = Math.sign(delta);
           if (direction !== wheelDirection) wheelAccum = 0;
           wheelDirection = direction;
           wheelAccum += Math.abs(delta);
+          // Throttle rapid wheel events.
           const now = performance.now();
           if (wheelAccum < 65 || now - lastWheelStep < 110) return;
           wheelAccum = 0;
           lastWheelStep = now;
+          // Locate the current zoom level.
           const current = zoomLevels.indexOf(zoom);
+          // Look up the nearest supported zoom step.
           const index = current >= 0 ? current : zoomLevels.indexOf(15);
+          // Choose the next zoom level.
           const next = clamp(index + direction, 0, zoomLevels.length - 1);
           if (next === index) return;
           zoom = zoomLevels[next];
@@ -1126,27 +1356,36 @@
         }, {
           passive: false
         });
+        // Switch theme when working with the editor standalone.
         $('theme-toggle').addEventListener('click', () => {
+          // Read the document theme.
           const root = document.documentElement;
           root.setAttribute('data-bs-theme', root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
           updateTheme();
         });
+        // Register playback mode radio-button handlers.
         document.querySelectorAll('input[name=mode]').forEach(r => {
           r.addEventListener('change', updatePlayMode);
           r.addEventListener('click', () => viewport.focus({
             preventScroll: true
           }));
         });
+        // Redraw the interval preview as its radius changes.
         $('interval').addEventListener('input', draw);
+        // Mark the beginning of the selected clip.
         $('set-start').addEventListener('click', () => mark('start'));
+        // Mark the ending of the selected clip.
         $('set-end').addEventListener('click', () => mark('end'));
+        // Toggle the current playback mode.
         $('play').addEventListener('click', playToggle);
+        // Clear trim selection and update the waveform.
         $('reset').addEventListener('click', () => {
           start = null;
           end = null;
           refreshMarks();
           status('Selezione azzerata.');
         });
+        // Send validated trim points to the parent application.
         $('confirm').addEventListener('click', () => {
           const [a, b] = selection();
           if (window.parent !== window && window.frameElement?.dataset.waveformEmbedded === '1') {
@@ -1169,12 +1408,19 @@
             status(tr('Punti di taglio: ', 'Trim points: ') + format(a) + ' — ' + format(b) + tr(' (durata ', ' (duration ') + format(b - a) + tr('). Nessun file modificato.', '). No file changed.'));
           }
         });
+        // Route pointer input into waveform dragging.
         viewport.addEventListener('pointerdown', beginDrag);
+        // Route pointer input into waveform dragging.
         viewport.addEventListener('pointermove', dragMove);
+        // Route pointer input into waveform dragging.
         viewport.addEventListener('pointerup', endDrag);
+        // Route pointer input into waveform dragging.
         viewport.addEventListener('pointercancel', endDrag);
+        // Handle timeline shortcuts before focused controls consume them.
         window.addEventListener('keydown', e => {
-          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          // The modal owns keyboard input until it is dismissed.
+          if ($('editor-intro').open || e.altKey || e.ctrlKey || e.metaKey) return;
+          // Preserve keyboard editing in text and numeric fields.
           const editable = e.target.isContentEditable || e.target.matches?.('input:not([type="radio"]),textarea,[contenteditable="true"]');
           // Space always toggles playback, even with a button, select or number field focused.
           // Text editing remains possible with all other keys.
@@ -1185,6 +1431,7 @@
             return;
           }
           if (editable) return;
+          // Normalize the pressed keyboard key.
           const k = e.key.toLowerCase();
           if (k === 'i') {
             e.preventDefault();
@@ -1200,16 +1447,61 @@
             setPosition(position + (k === 'arrowright' ? 1 : -1) * (e.shiftKey ? 1 : .1), true);
           }
         }, true);
+        // Synchronize the play icon after pausing.
         video.addEventListener('pause', updatePlayIcon);
+        // Start the playhead animation on playback.
         video.addEventListener('play', () => {
           updatePlayIcon();
           tick();
         });
+        // Clear playback state when the clip ends.
         video.addEventListener('ended', () => {
           stopPlayback(false);
         });
+        // Keep canvas pixels synchronized with viewport size.
         window.addEventListener('resize', resizeCanvas);
+        // Detect whether this editor is inside Barbatrucco.
         const embedded = window.parent !== window && window.frameElement?.dataset.waveformEmbedded === '1';
+
+        // Persist the introduction opt-out, but not an ordinary dismissal.
+        // Store the first-use help preference.
+        const introKey = 'barbatrucco.editorIntroHidden';
+        // Reference the first-use help dialog.
+        const intro = $('editor-intro');
+        let introOptOut = false;
+        try {
+          introOptOut = localStorage.getItem(introKey) === '1';
+        } catch (_) {}
+
+        // Outside clicks close the dialog just like OK or Escape.
+        // Dismiss the introduction when its backdrop is clicked.
+        intro.addEventListener('click', e => {
+          if (e.target !== intro) return;
+          // Locate the dialog for backdrop-click dismissal.
+          const bounds = intro.getBoundingClientRect();
+          if (e.clientX < bounds.left || e.clientX > bounds.right ||
+              e.clientY < bounds.top || e.clientY > bounds.bottom) intro.close();
+        });
+        // Dismiss the introductory help on OK.
+        $('intro-ok').addEventListener('click', () => intro.close());
+        // Remember the opt-out and restore waveform keyboard focus.
+        intro.addEventListener('close', () => {
+          if ($('intro-never').checked) {
+            try { localStorage.setItem(introKey, '1'); } catch (_) {}
+          }
+          viewport.focus({ preventScroll: true });
+        });
+
+        // Display on the first file load of this editor instance.
+        let introShown = false;
+        // Show the first-use instructions unless opted out.
+        function showIntroduction() {
+          if (introShown || introOptOut) return;
+          introShown = true;
+          requestAnimationFrame(() => {
+            if (!intro.open) intro.showModal();
+          });
+        }
         let savedLang = 'en',
           savedTheme = 'dark';
         try {
@@ -1225,9 +1517,11 @@
           $('theme-toggle').hidden = true;
           $('embedded-close').hidden = false;
           setProcessing(false);
+          // Ask Barbatrucco to close the embedded editor.
           $('embedded-close').addEventListener('click', () => window.parent.postMessage({
             type: 'bt-waveform-close'
           }, window.parent.location.origin));
+          // Allow Escape to close the embedded editor.
           document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
               e.preventDefault();
@@ -1236,12 +1530,14 @@
               }, window.parent.location.origin);
             }
           }, true);
+          // Receive source media, settings and FFmpeg status from the parent.
           window.addEventListener('message', e => {
             if (e.origin !== window.parent.location.origin || e.source !== window.parent) return;
             if (e.data?.type === 'bt-waveform-settings') applySettings(e.data);
             else if (e.data?.type === 'bt-waveform-source' && e.data.blob instanceof Blob) {
               applySettings(e.data);
               openFile(e.data.blob, e.data.filename);
+              showIntroduction();
             } else if (e.data?.type === 'bt-waveform-status') {
               status(e.data.message || '');
               if (e.data.processing !== undefined) setProcessing(!!e.data.processing);
