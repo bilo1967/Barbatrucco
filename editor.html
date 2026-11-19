@@ -1473,14 +1473,10 @@
           introOptOut = localStorage.getItem(introKey) === '1';
         } catch (_) {}
 
-        // Outside clicks close the dialog just like OK or Escape.
-        // Dismiss the introduction when its backdrop is clicked.
+        // Dismiss on any click except the opt-out checkbox and OK button.
         intro.addEventListener('click', e => {
-          if (e.target !== intro) return;
-          // Locate the dialog for backdrop-click dismissal.
-          const bounds = intro.getBoundingClientRect();
-          if (e.clientX < bounds.left || e.clientX > bounds.right ||
-              e.clientY < bounds.top || e.clientY > bounds.bottom) intro.close();
+          if (e.target.closest('.intro-never, #intro-ok')) return;
+          intro.close();
         });
         // Dismiss the introductory help on OK.
         $('intro-ok').addEventListener('click', () => intro.close());
