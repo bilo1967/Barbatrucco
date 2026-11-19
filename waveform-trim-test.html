@@ -7,8 +7,8 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
-:root{color-scheme:dark;--bg:#0c1422;--panel:#152234;--line:#354861;--accent:#69baff;--muted:#a5b6cc;--dim:#080e17;--text:#e8eef7;--wave-bg:#101b2a;--wave-muted:#486077;--wave-shade:#04091491;--wave-ruler:#91a5bb}
-html[data-bs-theme="light"]{color-scheme:light;--bg:#edf2f8;--panel:#fff;--line:#c7d4e3;--accent:#207db3;--muted:#52677f;--dim:#dce5ed;--text:#1b2b3c;--wave-bg:#f0f5fa;--wave-muted:#8495a5;--wave-shade:#a4b0bd77;--wave-ruler:#5b7085}
+:root{color-scheme:dark;--bg:#0c1422;--panel:#152234;--line:#354861;--accent:#69baff;--muted:#a5b6cc;--dim:#080e17;--text:#e8eef7;--wave-bg:#101b2a;--wave-muted:#486077;--wave-shade:#04091491;--wave-ruler:#91a5bb;--play-normal:#2469c5;--play-interval:#8b5bd0;--play-normal-tint:rgba(36,105,197,.16);--play-interval-tint:rgba(139,91,208,.16)}
+html[data-bs-theme="light"]{color-scheme:light;--bg:#edf2f8;--panel:#fff;--line:#c7d4e3;--accent:#207db3;--muted:#52677f;--dim:#dce5ed;--text:#1b2b3c;--wave-bg:#f0f5fa;--wave-muted:#8495a5;--wave-shade:#a4b0bd77;--wave-ruler:#5b7085;--play-normal:#1862b7;--play-interval:#7846bf;--play-normal-tint:rgba(24,98,183,.11);--play-interval-tint:rgba(120,70,191,.11)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,sans-serif}
 .editor{min-height:100vh;display:flex;flex-direction:column;gap:12px;max-width:1320px;margin:auto;padding:14px 22px}
@@ -25,7 +25,7 @@ button{cursor:pointer}
 .drag-clock{display:none;position:absolute;inset:0;z-index:6;background:rgba(7,13,22,.92);place-items:center;font-size:clamp(24px,5vw,48px);font-variant-numeric:tabular-nums;letter-spacing:.025em}
 .preview.dragging .drag-clock{display:grid}
 .preview-shade{position:absolute;inset:0;background:#080e17;opacity:0;pointer-events:none;transition:opacity .09s}
-.time-line{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;gap:8px}
+.time-line{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;color:var(--muted);font-size:12px;gap:8px}.time-line>:last-child{text-align:right}
 .time-line strong{font-size:23px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
 .wave-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 8px}
 .wave-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:5px;color:var(--muted)}
@@ -34,8 +34,8 @@ button{cursor:pointer}
 .wave-box{position:relative;height:210px;touch-action:pan-y;cursor:grab;user-select:none;outline:none}
 .wave-box.dragging{cursor:grabbing}
 .wave-box canvas{display:block;width:100%;height:100%;border-radius:5px}
-.center-marker{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:50%;transform:translateX(-50%);pointer-events:none;box-shadow:0 0 4px #ffffff66}
-.center-marker::before{content:"";position:absolute;left:-5px;top:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #fff}
+.center-marker{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:50%;transform:translateX(-50%);pointer-events:none;box-shadow:0 0 4px #ffffff66}html[data-bs-theme="light"] .center-marker{background:#243c56;box-shadow:0 0 3px #243c5655}
+.center-marker::before{content:"";position:absolute;left:-5px;top:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #fff}html[data-bs-theme="light"] .center-marker::before{border-top-color:#243c56}
 .ticks{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:3px}
 .markers{display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr);align-items:center;gap:10px;margin-top:12px}
 .mark-btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px}
@@ -47,12 +47,18 @@ button{cursor:pointer}
 .player-mode .btn-play{width:48px;height:48px;font-size:21px;border-radius:50%;padding:0}
 .interval-size{display:flex;align-items:center;gap:5px;color:var(--muted)}
 .interval-size input{width:62px;text-align:center;padding:4px;font-variant-numeric:tabular-nums}
-.mode-options{display:flex;align-items:center;gap:11px}
+.mode-options{display:flex;align-items:center;gap:11px;padding:7px 10px;border-radius:8px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.player-mode[data-play-mode="normal"] .mode-options{background:var(--play-normal-tint);border-color:var(--play-normal-tint)}
+.player-mode[data-play-mode="interval"] .mode-options{background:var(--play-interval-tint);border-color:var(--play-interval-tint)}
+.player-mode .btn-play{background:var(--play-normal)!important;border-color:var(--play-normal)!important;color:#fff}
+.player-mode[data-play-mode="interval"] .btn-play{background:var(--play-interval)!important;border-color:var(--play-interval)!important}
+html[data-bs-theme="light"] #set-end{color:#70400b;border-color:#ae6d1e;font-weight:600}
+html[data-bs-theme="light"] #set-end:hover{color:#fff;background:#956010;border-color:#956010}
 .mode-options input{accent-color:var(--accent)}
 .bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}
 .bottom .actions{display:flex;gap:7px}
 .status{font-size:12px;color:var(--muted);min-height:18px}
-.hint{font-size:11px;color:var(--muted)}
+.hint{font-size:11px;color:var(--muted);text-align:center}
 kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;color:#fff}
 @media(max-width:680px){.editor{padding:10px;gap:9px}.preview{height:115px;max-width:215px}.wave-box{height:175px}.markers{grid-template-columns:1fr;justify-items:center}.mark-btn:first-child,.mark-btn:last-child{justify-self:center}.wave-head{flex-wrap:wrap}.top h1{font-size:14px}}
 </style>
@@ -99,7 +105,7 @@ kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;col
   </section>
   <section class="markers">
     <button class="btn btn-outline-success mark-btn" id="set-start" disabled><i class="bi bi-flag"></i> Inizio <small id="start-value">—</small></button>
-    <div class="player-mode">
+    <div class="player-mode" id="player-mode" data-play-mode="normal">
       <button class="btn btn-primary btn-play" id="play" disabled title="Play/Pausa (spazio)"><i id="play-icon" class="bi bi-play-fill"></i></button>
       <div class="mode-options">
         <label><input type="radio" name="mode" value="normal" checked> Normale</label>
@@ -146,6 +152,10 @@ function rulerStep(){
   // About five to ten readable labels across the viewport.
   for(const n of [.5,1,2,5,10,15,30,60,120])if(zoom/n <= 9)return n;
   return 300;
+}
+function updatePlayMode(){
+  $('player-mode').dataset.playMode=mode();
+  draw();
 }
 function updateTheme(){
   const light=document.documentElement.getAttribute('data-bs-theme')==='light';
@@ -245,7 +255,7 @@ function draw(){
   const theme = getComputedStyle(document.documentElement);
   const palette = v => theme.getPropertyValue(v).trim();
   ctx.fillStyle=palette('--wave-bg');ctx.fillRect(0,0,w,h);
-  const pxPerSecond=w/zoom, center=w/2, mid=h/2, barWidth=3.2*dpr, step=5*dpr;
+  const pxPerSecond=w/zoom, center=w/2, mid=h/2;
   const [a,b]=selection();
   const lo=position-zoom/2,hi=position+zoom/2;
   const rStep=rulerStep();
@@ -271,16 +281,37 @@ function draw(){
     ctx.strokeStyle='rgba(142,211,255,.8)';ctx.lineWidth=1*dpr;
     for(const x of [x1,x2]){ctx.beginPath();ctx.moveTo(x,17*dpr);ctx.lineTo(x,h);ctx.stroke();}
   }
-  for(let x=0;x<w;x+=step){
-    const t=position+(x-center)/pxPerSecond;
-    if(t<0||t>duration)continue;
-    const idx=Math.floor(t*10);
-    const amp=peaks ? Math.max(peaks[clamp(idx,0,peaks.length-1)]||0,.025):.035;
+  // Fixed time-grid bars: amplitudes are aggregated over every bar's full time
+  // interval, independent of scrolling position. This avoids the apparent
+  // waveform morphing caused by sampling a single 100 ms bucket per pixel bar.
+  const desiredStep=zoom/(Math.max(1,viewport.clientWidth)/5);
+  const intervals=[.1,.2,.5,1,2,5,10];
+  const barSeconds=intervals.find(n=>n>=desiredStep)||10;
+  const pixelsPerBar=barSeconds*pxPerSecond;
+  const barWidth=Math.max(1*dpr,Math.min(4*dpr,pixelsPerBar*.67));
+  const first=Math.max(0,Math.floor(lo/barSeconds));
+  const last=Math.min(Math.ceil(duration/barSeconds),Math.ceil(hi/barSeconds));
+  for(let k=first;k<=last;k++){
+    const t=k*barSeconds, next=Math.min(duration,(k+1)*barSeconds);
+    if(next<=t || t>duration)continue;
+    const x=center+(t+barSeconds*.5-position)*pxPerSecond;
+    if(x < -barWidth || x>w+barWidth)continue;
+    let amp=.035;
+    if(peaks){
+      const i0=clamp(Math.floor(t*10),0,peaks.length);
+      const i1=clamp(Math.ceil(next*10),i0+1,peaks.length);
+      let sum=0,maximum=0,count=0;
+      for(let i=i0;i<i1;i++){
+        const v=peaks[i]||0;sum+=v*v;maximum=Math.max(maximum,v);count++;
+      }
+      if(count)amp=Math.max(.025,Math.sqrt(sum/count)*.75+maximum*.25);
+    }
     const barHeight=clamp(Math.pow(amp,.66)*h*.82,3*dpr,h*.91);
-    ctx.fillStyle=t<a||t>b?palette('--wave-muted'):palette('--accent');
+    ctx.fillStyle=t<a||t>=b?palette('--wave-muted'):palette('--accent');
     ctx.beginPath();
-    if(ctx.roundRect)ctx.roundRect(x,mid-barHeight/2,barWidth,barHeight,barWidth/2);
-    else ctx.rect(x,mid-barHeight/2,barWidth,barHeight);
+    const bx=x-barWidth*.5;
+    if(ctx.roundRect)ctx.roundRect(bx,mid-barHeight/2,barWidth,barHeight,barWidth/2);
+    else ctx.rect(bx,mid-barHeight/2,barWidth,barHeight);
     ctx.fill();
   }
   for(const [from,to] of [[0,a],[b,duration]]){
@@ -381,7 +412,7 @@ $('theme-toggle').addEventListener('click',()=>{
   root.setAttribute('data-bs-theme',root.getAttribute('data-bs-theme')==='dark'?'light':'dark');
   updateTheme();
 });
-document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',draw));
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',updatePlayMode));
 $('interval').addEventListener('input',draw);
 $('set-start').addEventListener('click',()=>mark('start'));
 $('set-end').addEventListener('click',()=>mark('end'));
@@ -425,7 +456,7 @@ video.addEventListener('pause',updatePlayIcon);
 video.addEventListener('play',()=>{updatePlayIcon();tick();});
 video.addEventListener('ended',()=>{stopPlayback(false);});
 window.addEventListener('resize',resizeCanvas);
-resizeCanvas();refreshMarks();updateTheme();
+resizeCanvas();refreshMarks();updateTheme();updatePlayMode();
 })();
 </script>
 </body>
