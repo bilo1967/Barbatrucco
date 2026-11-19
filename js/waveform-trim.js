@@ -6,6 +6,13 @@ const origin=location.origin;
 let source=null,sourceName='',trigger=null,overlay=null,frame=null,active=false,busy=false,ready=false;
 function message(type,props={}){if(ready)frame.contentWindow?.postMessage({type,...props},origin);}
 function report(s,error=false){message('bt-waveform-status',{message:s,error});}
+function updateLabel(){
+ if(!trigger)return;
+ const it=window.BTI18n?.lang==='it';
+ trigger.innerHTML='<i class="bi bi-scissors" aria-hidden="true"></i> '+(it?'Ritaglia':'Cut');
+ trigger.title=it?'Ritaglia registrazione':'Trim recording';
+ trigger.setAttribute('aria-label',trigger.title);
+}
 function ensureUI(){
   if(trigger)return;
   const strip=document.querySelector('.recorder-button-strip');
@@ -14,7 +21,7 @@ function ensureUI(){
   trigger.type='button';trigger.className='btn btn-sm btn-outline-secondary';
   trigger.title='Taglia la registrazione';trigger.setAttribute('aria-label','Taglia la registrazione');
   trigger.innerHTML='<i class="bi bi-scissors" aria-hidden="true"></i>';trigger.hidden=true;
-  trigger.addEventListener('click',open);strip.appendChild(trigger);
+  trigger.addEventListener('click',open);strip.appendChild(trigger);updateLabel();
   overlay=document.createElement('div');overlay.id='bt-waveform-overlay';overlay.hidden=true;
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-label','Editor di ritaglio');
@@ -30,7 +37,7 @@ async function open(){
   try{
     // srcdoc avoids server X-Frame-Options / frame-ancestors restrictions:
     // the HTML is retrieved as a resource, not navigated to in a frame.
-    const response=await fetch('waveform-trim-test.html',{cache:'no-cache'});
+    const response=await fetch('editor.html',{cache:'no-cache'});
     if(!response.ok)throw Error('HTTP '+response.status);
     const html=await response.text();
     if(!active)return;
@@ -125,12 +132,13 @@ window.addEventListener('message',e=>{
   if(!active||e.origin!==origin||e.source!==frame?.contentWindow)return;
   switch(e.data?.type){
     case 'bt-waveform-ready':
-      ready=true;message('bt-waveform-source',{blob:source,filename:sourceName});break;
+      ready=true;message('bt-waveform-source',{blob:source,filename:sourceName,lang:window.BTI18n?.lang||'en',theme:document.documentElement.getAttribute('data-rec-theme')||'light'});break;
     case 'bt-waveform-close':close();break;
     case 'bt-waveform-apply':apply(Number(e.data.start),Number(e.data.end));break;
   }
 });
 window.BTWaveformTrim={
+  setLanguage(lang){updateLabel();if(active&&ready)message('bt-waveform-settings',{lang});},
   onRecording(blob,filename){
     ensureUI();if(!trigger)return;
     source=blob&&(blob.type.startsWith('video/webm')||blob.type.startsWith('audio/webm'))?blob:null;

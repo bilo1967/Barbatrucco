@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="it" data-bs-theme="dark">
+<html lang="en" data-bs-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Waveform trim editor — prototype</title>
+<title>Barbatrucco — Video trimmer</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
@@ -69,13 +69,13 @@ html[data-bs-theme="light"] #set-end:hover{color:#fff;background:#956010;border-
 .hint{font-size:11px;color:var(--muted);text-align:center}
 kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;color:#fff}
 @media(max-width:680px){.editor{padding:10px;gap:9px}.preview{height:115px;max-width:215px}.wave-box{height:175px}.markers{grid-template-columns:1fr;justify-items:center}.mark-btn:first-child,.mark-btn:last-child{justify-self:center}.wave-head{flex-wrap:wrap}.top h1{font-size:14px}}
-#embedded-close[hidden],#file-picker-label[hidden]{display:none!important}
+#embedded-close[hidden],#file-picker-label[hidden],#theme-toggle[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <main class="editor">
   <header class="top">
-    <h1><i class="bi bi-scissors"></i> Editor di ritaglio · prototipo</h1>
+    <h1><i class="bi bi-scissors"></i> Video trimmer</h1>
     <div class="file-controls"><span id="filename" class="filename">Nessun file</span>
       <button id="theme-toggle" class="btn btn-sm btn-outline-secondary" type="button" title="Alterna tema chiaro/scuro" aria-label="Alterna tema chiaro/scuro"><i class="bi bi-sun"></i></button>
       <button id="embedded-close" class="btn btn-sm btn-outline-secondary" type="button" hidden aria-label="Chiudi editor" title="Chiudi"><i class="bi bi-x-lg"></i></button>
@@ -142,6 +142,18 @@ kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;col
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
+const translations=[["Nessun file","No file"],["Alterna tema chiaro/scuro","Switch light/dark theme"],["Chiudi editor","Close editor"],["Chiudi","Close"],["Apri WebM","Open WebM"],["Carica un WebM per iniziare","Open WebM to start"],["Posizione","Position"],["Totale ","Total "],["Forma d'onda — trascina per scorrere, rilascia per aggiornare il video","Waveform — drag to navigate, release to update video"],["Selezione completa","Full recording"],["Verde: inizio · arancio: fine · bianco: testina","Green: start · amber: end · white: playhead"],["15 secondi visibili","15 seconds visible"],["Inizio","Start"],["Fine","End"],["Play/Pausa (spazio)","Play/Pause (space)"],["Normale","Normal"],["Intervallo","Interval"],["Scorrimento: trascina la forma d'onda.","Navigate: drag waveform."],["In attesa del file.","Waiting for file."],["Ripristina","Reset"],["Conferma punti","Confirm points"],[" secondi visibili"," seconds visible"],[" minuti visibili"," minutes visible"],["Durata ","Duration "],["Inizio deve precedere Fine.","Start must precede End."],["Fine deve seguire Inizio.","End must follow Start."],[" impostato a "," set at "],["Riproduzione non disponibile: ","Playback unavailable: "],["Analisi della forma d’onda in corso…","Analyzing waveform…"],["Forma d’onda pronta.","Waveform ready."],["Registrazione WebM","WebM recording"],["Apertura file…","Opening file…"],["Durata non disponibile. Verificare il file WebM.","Duration unavailable. Check WebM."],["File non leggibile dal player","Unplayable file"],["Audio non decodificabile per la forma d’onda: ","Cannot decode audio: "],["Errore: ","Error: "],["Selezione azzerata.","Selection reset."],["Intervallo troppo breve.","Interval too short."],["Seleziona una parte della registrazione.","Select a shorter interval."],["Preparazione del ritaglio…","Preparing trim…"],["Punti di taglio: ","Trim points: "],[" (durata "," (duration "],["). Nessun file modificato.","). No file changed."],["Applica taglio","Apply trim"],["Editor di ritaglio","Video trimmer"],["Play/Pausa ·","Play/Pause ·"],["Inizio ·","Start ·"],["Fine.","End."],["Spazio","Space"],["Scorrimento: trascina la forma d'onda.","Navigate: drag the waveform."]],itToEn=new Map(translations),enToIt=new Map(translations.map(([it,en])=>[en,it]));
+let currentLang='en';
+const tr=(it,en)=>currentLang==='it'?it:(en||itToEn.get(it)||it);
+function localizeDOM(){
+ const map=currentLang==='it'?enToIt:itToEn,walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ let n;while((n=walker.nextNode())){const m=n.textContent.match(/^(\s*)(.*?)(\s*)$/s);if(m&&map.has(m[2]))n.textContent=m[1]+map.get(m[2])+m[3];}
+ document.querySelectorAll('[title],[aria-label]').forEach(el=>{for(const key of ['title','aria-label']){const v=el.getAttribute(key);if(map.has(v))el.setAttribute(key,map.get(v));}});
+}
+function setLanguage(lang){currentLang=lang==='it'?'it':'en';document.documentElement.lang=currentLang;localizeDOM();if(sourceFile){$('total').textContent=tr('Totale ','Total ')+format(duration);refreshMarks();setPosition(position,false);}else status(tr('In attesa del file.','Waiting for file.'));}
+function setTheme(theme){document.documentElement.setAttribute('data-bs-theme',theme==='light'?'light':'dark');updateTheme();}
+function applySettings(data){if(data?.lang)setLanguage(data.lang);if(data?.theme)setTheme(data.theme);}
+
 const video = $('video'), preview = $('preview'), clock = $('clock'), dragClock = $('drag-clock');
 const canvas = $('wave'), ctx = canvas.getContext('2d'), viewport = $('wave-box');
 const mode = () => document.querySelector('input[name=mode]:checked').value;
@@ -156,7 +168,7 @@ const format = (t, decimals=true) => {
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+
     (decimals ? s.toFixed(1).padStart(4,'0') : String(Math.floor(s)).padStart(2,'0'));
 };
-const status = s => $('status').textContent = s;
+const status = s => $('status').textContent = currentLang==='en'?(itToEn.get(s)||s):s;
 function intervalBounds() {
   const radius = clamp(Number($('interval').value)||2,.5,10);
   const origin = playback?.type === 'interval' ? playback.origin : position;
@@ -182,8 +194,8 @@ function setPosition(t,seek=true) {
   clock.textContent = format(position); dragClock.textContent = format(position);
   viewport.setAttribute('aria-valuenow',String(position));
   viewport.setAttribute('aria-valuemax',String(Math.round(duration*10)/10));
-  $('zoom-hint').textContent= zoom<60 ? zoom.toLocaleString('it-IT')+' secondi visibili' :
-    (zoom/60).toLocaleString('it-IT')+' minuti visibili';
+  $('zoom-hint').textContent= zoom<60 ? zoom.toLocaleString(currentLang==='it'?'it-IT':'en-US')+tr(' secondi visibili',' seconds visible') :
+    (zoom/60).toLocaleString(currentLang==='it'?'it-IT':'en-US')+tr(' minuti visibili',' minutes visible');
   if (seek && Number.isFinite(video.duration)) {
     video.pause(); video.currentTime = position;
     playback = null; updatePlayIcon(); restoreAudio();
@@ -195,7 +207,7 @@ function refreshMarks() {
   $('end-value').textContent = end===null ? '—' : format(end);
   const [a,b]=selection();
   $('selection-length').textContent = start===null && end===null ?
-    'Selezione completa' : 'Durata '+format(Math.max(0,b-a));
+    tr('Selezione completa','Full recording') : tr('Durata ','Duration ')+format(Math.max(0,b-a));
   draw();
 }
 function mark(which) {
@@ -208,7 +220,7 @@ function mark(which) {
     if (start !== null && time <= start) {status('Fine deve seguire Inizio.');return;}
     end = time;
   }
-  refreshMarks(); status((which==='start'?'Inizio':'Fine')+' impostato a '+format(time));
+  refreshMarks(); status((which==='start'?tr('Inizio','Start'):tr('Fine','End'))+tr(' impostato a ',' set at ')+format(time));
 }
 function restoreAudio(){video.volume=1; $('shade').style.opacity=0;}
 function applyTrimPreview(time){
@@ -240,7 +252,7 @@ async function playToggle() {
     video.currentTime=Math.max(0,position-radius);
   }
   try { await video.play();updatePlayIcon();tick(); }
-  catch(e){status('Riproduzione non disponibile: '+e.message);stopPlayback(false);}
+  catch(e){status(tr('Riproduzione non disponibile: ','Playback unavailable: ')+e.message);stopPlayback(false);}
 }
 function tick() {
   cancelAnimationFrame(raf);
@@ -397,7 +409,7 @@ async function openFile(file, displayName) {
   const token=++loadToken;stopPlayback(false);sourceFile=file;
   if(fileUrl)URL.revokeObjectURL(fileUrl);
   fileUrl=URL.createObjectURL(file);video.src=fileUrl;video.load();
-  $('filename').textContent=displayName || file.name || 'Registrazione WebM';
+  $('filename').textContent=displayName || file.name || tr('Registrazione WebM','WebM recording');
   start=null;end=null;position=0;peaks=null;
   $('reset').disabled=false;$('confirm').disabled=false;
   $('play').disabled=false;$('set-start').disabled=false;$('set-end').disabled=false;
@@ -413,11 +425,11 @@ async function openFile(file, displayName) {
     duration=Number.isFinite(video.duration)?video.duration:0;
     if(!(duration>0))throw new Error('Durata non disponibile. Verificare il file WebM.');
     preview.classList.toggle('no-video',!video.videoWidth);
-    $('total').textContent='Totale '+format(duration);
+    $('total').textContent=tr('Totale ','Total ')+format(duration);
     setPosition(0,true);refreshMarks();
     try {await makePeaks(file,token);}
-    catch(e){if(token===loadToken)status('Audio non decodificabile per la forma d’onda: '+e.message);}
-  } catch(e){if(token===loadToken)status('Errore: '+e.message);}
+    catch(e){if(token===loadToken)status(tr('Audio non decodificabile per la forma d’onda: ','Cannot decode audio: ')+e.message);}
+  } catch(e){if(token===loadToken)status(tr('Errore: ','Error: ')+e.message);}
 }
 $('file').addEventListener('change',e=>openFile(e.target.files[0]));
 $('zoom').addEventListener('change',e=>{zoom=Number(e.target.value)||15;setPosition(position,false);});
@@ -465,7 +477,7 @@ $('confirm').addEventListener('click',()=>{
     status('Preparazione del ritaglio…');
     window.parent.postMessage({type:'bt-waveform-apply',start:a,end:b},window.parent.location.origin);
   } else {
-    status('Punti di taglio: '+format(a)+' — '+format(b)+' (durata '+format(b-a)+'). Nessun file modificato.');
+    status(tr('Punti di taglio: ','Trim points: ')+format(a)+' — '+format(b)+tr(' (durata ',' (duration ')+format(b-a)+tr('). Nessun file modificato.','). No file changed.'));
   }
 });
 viewport.addEventListener('pointerdown',beginDrag);
@@ -498,18 +510,23 @@ video.addEventListener('play',()=>{updatePlayIcon();tick();});
 video.addEventListener('ended',()=>{stopPlayback(false);});
 window.addEventListener('resize',resizeCanvas);
 const embedded=window.parent!==window && window.frameElement?.dataset.waveformEmbedded === '1';
+let savedLang='en',savedTheme='dark';
+try{savedLang=localStorage.getItem('barbatrucco.language')||'en';savedTheme=localStorage.getItem('barbatrucco.theme')||'dark';}catch(_){}
+applySettings({lang:savedLang,theme:savedTheme});
 if(embedded){
   $('file-picker-label').hidden=true;
+  $('theme-toggle').hidden=true;
   $('embedded-close').hidden=false;
-  $('confirm').innerHTML='<i class="bi bi-check-lg"></i> Applica taglio';
+  $('confirm').innerHTML='<i class="bi bi-check-lg"></i> '+tr('Applica taglio','Apply trim');
   $('embedded-close').addEventListener('click',()=>window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin));
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){e.preventDefault();window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin);}
   },true);
   window.addEventListener('message',e=>{
     if(e.origin!==window.parent.location.origin || e.source!==window.parent)return;
-    if(e.data?.type==='bt-waveform-source' && e.data.blob instanceof Blob){
-      openFile(e.data.blob,e.data.filename);
+    if(e.data?.type==='bt-waveform-settings')applySettings(e.data);
+    else if(e.data?.type==='bt-waveform-source' && e.data.blob instanceof Blob){
+      applySettings(e.data);openFile(e.data.blob,e.data.filename);
     }else if(e.data?.type==='bt-waveform-status'){
       status(e.data.message||'');
       if(e.data.error)$('confirm').disabled=false;

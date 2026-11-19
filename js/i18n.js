@@ -63,6 +63,7 @@ const BTLanguages = {
     "Microphone & Webcam",
     "Microfono e webcam"
   ],
+  "help-trimmer": ["Video trimmer", "Ritaglia"],
   "help-links": [
     "Useful links",
     "Link utili"
@@ -131,6 +132,7 @@ const BTI18n = {
     const duration = document.querySelector('[data-i18n-prefix="duration"]');
     if (duration) { for (const node of duration.childNodes) if (node.nodeType === Node.TEXT_NODE) { node.textContent = this.text('duration'); break; } }
     const selector = document.getElementById('ui-language'); if (selector) selector.value = this.lang;
+    window.BTWaveformTrim?.setLanguage?.(this.lang);
     if (typeof bootbox !== 'undefined' && bootbox.setLocale) { try { bootbox.setLocale(this.lang); } catch (_) {} }
   },
   init() {

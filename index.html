@@ -203,7 +203,7 @@
     <script src="js/i18n.js?v=4.4"></script>
     <script src="js/audio-mixer.js?v=2.1"></script>
     <script src="js/barbatrucco.js?v=4.2"></script>
-    <script src="js/waveform-trim.js?v=1.0" defer></script>
+    <script src="js/waveform-trim.js?v=1.1" defer></script>
   </head>
   <body>
     <!-- begin: container -->
@@ -363,6 +363,7 @@
                 <li class="nav-item">
                   <a aria-controls="istruzioni-audio" aria-selected="true" class="nav-link" data-i18n="help-devices" href="#istruzioni-microfono" role="tab">Microphone &amp; Webcam</a>
                 </li>
+                <li class="nav-item"><a aria-controls="istruzioni-editor" aria-selected="false" class="nav-link" data-i18n="help-trimmer" href="#istruzioni-editor" role="tab">Video trimmer</a></li>
                 <li class="nav-item">
                   <a aria-controls="link-utili" aria-selected="false" class="nav-link" data-i18n="help-links" href="#link-utili" role="tab">Useful links</a>
                 </li>
@@ -440,6 +441,17 @@
                     </p>
                   </div>
                 </div>
+                <div class="tab-pane" id="istruzioni-editor" role="tabpanel">
+<div data-language="en"><h5>Trim recordings</h5><p>After recording, click <b>Cut</b> (scissors). Media stays in your browser.</p>
+<ol><li>Drag the waveform to navigate; release to update the video.</li><li>Listen in <b>Normal</b> or <b>Interval</b> mode (± seconds around the playhead).</li>
+<li>Mark <b>Start</b> and <b>End</b>. Excluded portions are darkened and quieter during playback.</li>
+<li>Zoom using the selector or mouse wheel over the waveform. Press <b>Apply trim</b> to update the downloadable recording.</li></ol>
+<p>Keyboard: Space = Play/Pause; arrows = ±0.1 s (Shift: ±1 s); I = Start; O = End. Close to cancel.</p></div>
+<div data-language="it"><h5>Ritagliare una registrazione</h5><p>Dopo la registrazione, premi <b>Ritaglia</b> (forbici). I file rimangono nel browser.</p>
+<ol><li>Trascina la forma d'onda e rilascia per aggiornare il video.</li><li>Ascolta in modalità <b>Normale</b> o <b>Intervallo</b> (± secondi intorno alla testina).</li>
+<li>Marca <b>Inizio</b> e <b>Fine</b>. Le parti escluse sono oscurate e attenuate durante la riproduzione.</li>
+<li>Usa lo zoom o la rotella del mouse sulla forma d'onda. Premi <b>Applica taglio</b> per aggiornare la registrazione scaricabile.</li></ol>
+<p>Tastiera: Spazio = Play/Pausa; frecce = ±0,1 s (Shift: ±1 s); I = Inizio; O = Fine. Chiudi per annullare.</p></div></div>
                 <div aria-labelledby="link-utili-tab" class="tab-pane" id="link-utili" role="tabpanel">
                   <div data-language="en">
                     <h5>Useful links</h5>
