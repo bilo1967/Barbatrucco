@@ -419,6 +419,30 @@ async function openFile(file) {
 }
 $('file').addEventListener('change',e=>openFile(e.target.files[0]));
 $('zoom').addEventListener('change',e=>{zoom=Number(e.target.value)||15;setPosition(position,false);});
+const zoomLevels = [2.5, 5, 10, 15, 30, 60, 300];
+let wheelAccum = 0, wheelDirection = 0, lastWheelStep = 0;
+viewport.addEventListener('wheel', e => {
+  // Ctrl+wheel is conventionally used for browser zoom; do not override it.
+  if (e.ctrlKey || e.metaKey) return;
+  e.preventDefault(); // Only the waveform uses the wheel; elsewhere the page scrolls.
+  const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+  if (!delta) return;
+  const direction = Math.sign(delta);
+  if (direction !== wheelDirection) wheelAccum = 0;
+  wheelDirection = direction;
+  wheelAccum += Math.abs(delta);
+  const now = performance.now();
+  if (wheelAccum < 65 || now - lastWheelStep < 110) return;
+  wheelAccum = 0;
+  lastWheelStep = now;
+  const current = zoomLevels.indexOf(zoom);
+  const index = current >= 0 ? current : zoomLevels.indexOf(15);
+  const next = clamp(index + direction, 0, zoomLevels.length - 1);
+  if (next === index) return;
+  zoom = zoomLevels[next];
+  $('zoom').value = String(zoom);
+  setPosition(position, false); // Keep playhead and video at their current times.
+}, {passive:false});
 $('theme-toggle').addEventListener('click',()=>{
   const root=document.documentElement;
   root.setAttribute('data-bs-theme',root.getAttribute('data-bs-theme')==='dark'?'light':'dark');
