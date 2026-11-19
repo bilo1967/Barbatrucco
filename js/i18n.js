@@ -142,4 +142,5 @@ const BTI18n = {
     if (selector) selector.addEventListener('change', e => this.setLanguage(e.target.value));
   }
 };
+window.BTI18n = BTI18n;
 document.addEventListener('DOMContentLoaded', () => BTI18n.init());

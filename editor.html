@@ -69,7 +69,7 @@ html[data-bs-theme="light"] #set-end:hover{color:#fff;background:#956010;border-
 .hint{font-size:11px;color:var(--muted);text-align:center}
 kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;color:#fff}
 @media(max-width:680px){.editor{padding:10px;gap:9px}.preview{height:115px;max-width:215px}.wave-box{height:175px}.markers{grid-template-columns:1fr;justify-items:center}.mark-btn:first-child,.mark-btn:last-child{justify-self:center}.wave-head{flex-wrap:wrap}.top h1{font-size:14px}}
-#embedded-close[hidden],#file-picker-label[hidden],#theme-toggle[hidden]{display:none!important}
+#embedded-close[hidden],#file-picker-label[hidden],#theme-toggle[hidden],#filename[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -158,7 +158,7 @@ const video = $('video'), preview = $('preview'), clock = $('clock'), dragClock 
 const canvas = $('wave'), ctx = canvas.getContext('2d'), viewport = $('wave-box');
 const mode = () => document.querySelector('input[name=mode]:checked').value;
 let fileUrl = null, sourceFile = null, duration = 0, position = 0;
-let start = null, end = null, peaks = null, drag = null, zoom = 15;
+let start = null, end = null, peaks = null, drag = null, zoom = 15, waveGain = 1;
 let playback = null, raf = 0, audioContext = null, loadToken = 0;
 const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
 const roundTenth = t => Math.round(t*10)/10;
@@ -169,6 +169,19 @@ const format = (t, decimals=true) => {
     (decimals ? s.toFixed(1).padStart(4,'0') : String(Math.floor(s)).padStart(2,'0'));
 };
 const status = s => $('status').textContent = currentLang==='en'?(itToEn.get(s)||s):s;
+let processing=false;
+function setProcessing(value){
+  processing=value;
+  $('confirm').disabled=value||!sourceFile;
+  $('confirm').innerHTML=value
+    ? '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>'+tr('Elaborazione…','Processing…')
+    : '<i class="bi bi-check-lg"></i> '+(embedded?tr('Applica taglio','Apply trim'):tr('Conferma punti','Confirm points'));
+  $('embedded-close').disabled=value;
+  $('play').disabled=value||!sourceFile;
+  $('set-start').disabled=value||!sourceFile;
+  $('set-end').disabled=value||!sourceFile;
+  $('reset').disabled=value||!sourceFile;
+}
 function intervalBounds() {
   const radius = clamp(Number($('interval').value)||2,.5,10);
   const origin = playback?.type === 'interval' ? playback.origin : position;
@@ -332,7 +345,7 @@ function draw(){
       }
       if(count)amp=Math.max(.025,Math.sqrt(sum/count)*.75+maximum*.25);
     }
-    const barHeight=clamp(Math.pow(amp,.66)*h*.82,3*dpr,h*.91);
+    const barHeight=clamp(Math.pow(Math.min(1,amp*waveGain),.66)*h*.82,3*dpr,h*.91);
     ctx.fillStyle=t<a||t>=b?palette('--wave-muted'):palette('--accent');
     ctx.beginPath();
     const bx=x-barWidth*.5;
@@ -398,7 +411,11 @@ async function makePeaks(file,token){
       }
       result[k]=n?Math.sqrt(sum/n):0;
     }
-    peaks=result;draw();status('Forma d’onda pronta.');
+    peaks=result;
+    const nonZero=Array.from(result).filter(v=>v>0).sort((a,b)=>a-b);
+    const reference=nonZero.length ? nonZero[Math.floor(nonZero.length*.92)] : 0;
+    waveGain=reference>0?Math.min(12,.55/reference):1;
+    draw();status('Forma d’onda pronta.');
   } finally {
     if(audioContext===ac)audioContext=null;
     await ac.close().catch(()=>{});
@@ -410,7 +427,7 @@ async function openFile(file, displayName) {
   if(fileUrl)URL.revokeObjectURL(fileUrl);
   fileUrl=URL.createObjectURL(file);video.src=fileUrl;video.load();
   $('filename').textContent=displayName || file.name || tr('Registrazione WebM','WebM recording');
-  start=null;end=null;position=0;peaks=null;
+  start=null;end=null;position=0;peaks=null;waveGain=1;
   $('reset').disabled=false;$('confirm').disabled=false;
   $('play').disabled=false;$('set-start').disabled=false;$('set-end').disabled=false;
   const hasVideo=file.type.startsWith('video/')||(/\.webm$/i.test(file.name));
@@ -473,7 +490,7 @@ $('confirm').addEventListener('click',()=>{
   if (window.parent !== window && window.frameElement?.dataset.waveformEmbedded === '1') {
     if (!(b-a>.1)) {status('Intervallo troppo breve.');return;}
     if (a<=.001 && b>=duration-.001) {status('Seleziona una parte della registrazione.');return;}
-    $('confirm').disabled=true;
+    setProcessing(true);
     status('Preparazione del ritaglio…');
     window.parent.postMessage({type:'bt-waveform-apply',start:a,end:b},window.parent.location.origin);
   } else {
@@ -515,9 +532,10 @@ try{savedLang=localStorage.getItem('barbatrucco.language')||'en';savedTheme=loca
 applySettings({lang:savedLang,theme:savedTheme});
 if(embedded){
   $('file-picker-label').hidden=true;
+  $('filename').hidden=true;
   $('theme-toggle').hidden=true;
   $('embedded-close').hidden=false;
-  $('confirm').innerHTML='<i class="bi bi-check-lg"></i> '+tr('Applica taglio','Apply trim');
+  setProcessing(false);
   $('embedded-close').addEventListener('click',()=>window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin));
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){e.preventDefault();window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin);}
@@ -529,12 +547,14 @@ if(embedded){
       applySettings(e.data);openFile(e.data.blob,e.data.filename);
     }else if(e.data?.type==='bt-waveform-status'){
       status(e.data.message||'');
-      if(e.data.error)$('confirm').disabled=false;
+      if(e.data.processing!==undefined)setProcessing(!!e.data.processing);
+      if(e.data.error)setProcessing(false);
     }
   });
   window.parent.postMessage({type:'bt-waveform-ready'},window.parent.location.origin);
 }
 resizeCanvas();refreshMarks();updateTheme();updatePlayMode();
+if(embedded){document.body.setAttribute('tabindex','-1');document.body.focus({preventScroll:true});}
 })();
 </script>
 </body>

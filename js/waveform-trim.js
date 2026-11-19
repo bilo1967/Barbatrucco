@@ -6,6 +6,7 @@ const origin=location.origin;
 let source=null,sourceName='',trigger=null,overlay=null,frame=null,active=false,busy=false,ready=false;
 function message(type,props={}){if(ready)frame.contentWindow?.postMessage({type,...props},origin);}
 function report(s,error=false){message('bt-waveform-status',{message:s,error});}
+function processingState(value){message('bt-waveform-status',{processing:value,message:value?'Elaborazione in corso…':''});}
 function updateLabel(){
  if(!trigger)return;
  const it=window.BTI18n?.lang==='it';
@@ -33,6 +34,7 @@ function ensureUI(){
 async function open(){
   if(!source||busy||active)return;
   ensureUI();active=true;ready=false;overlay.hidden=false;
+  document.getElementById('mangiacassette')?.pause();
   frame.dataset.waveformEmbedded='1';
   try{
     // srcdoc avoids server X-Frame-Options / frame-ancestors restrictions:
@@ -85,7 +87,7 @@ async function apply(a,b){
   }
   const blob=source,oldName=sourceName,isVideo=blob.type.startsWith('video/');
   const ffmpeg=window.ffmpeg,files=['bt-wave-input.webm','bt-wave-head.webm','bt-wave-tail.webm','bt-wave-list.txt','bt-wave-result.webm'];
-  busy=true;report('Elaborazione video…');
+  busy=true;processingState(true);report('Elaborazione video…');
   try{
     const result=await window.btRunConversion(async()=>{
       try{
@@ -125,6 +127,7 @@ async function apply(a,b){
     busy=false;close();
   }catch(e){
     busy=false;console.error('Waveform trim:',e);
+    processingState(false);
     report('Taglio non riuscito: '+(e.message||e),true);
   }
 }
@@ -132,7 +135,9 @@ window.addEventListener('message',e=>{
   if(!active||e.origin!==origin||e.source!==frame?.contentWindow)return;
   switch(e.data?.type){
     case 'bt-waveform-ready':
-      ready=true;message('bt-waveform-source',{blob:source,filename:sourceName,lang:window.BTI18n?.lang||'en',theme:document.documentElement.getAttribute('data-rec-theme')||'light'});break;
+      ready=true;
+      frame.focus();
+      message('bt-waveform-source',{blob:source,filename:sourceName,lang:window.BTI18n?.lang||'en',theme:document.documentElement.getAttribute('data-rec-theme')||'light'});break;
     case 'bt-waveform-close':close();break;
     case 'bt-waveform-apply':apply(Number(e.data.start),Number(e.data.end));break;
   }
