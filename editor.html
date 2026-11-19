@@ -409,13 +409,13 @@
         border-color: var(--play-interval) !important
       }
 
-      html[data-bs-theme="light"] #set-end {
+      html[data-bs-theme="light"] #aset-end {
         color: #70400b;
         border-color: #ae6d1e;
         font-weight: 600
       }
 
-      html[data-bs-theme="light"] #set-end:hover {
+      html[data-bs-theme="light"] #aset-end:hover {
         color: #fff;
         background: #956010;
         border-color: #956010
@@ -586,7 +586,7 @@
           <button id="embedded-close" class="btn btn-sm btn-outline-secondary" type="button" hidden aria-label="Chiudi editor" title="Chiudi">
             <i class="bi bi-x-lg"></i>
           </button>
-          <label id="file-picker-label" class="btn btn-sm btn-outline-info mb-0" for="file">
+          <label id="file-picker-label" class="btn btn-sm btn-info mb-0" for="file">
             <i class="bi bi-folder2-open"></i> Apri WebM
           </label>
           <input id="file" type="file" accept=".webm,video/webm,audio/webm" hidden>
@@ -610,13 +610,13 @@
         </div>
         <div class="ticks"><span>Verde: inizio · arancio: fine · bianco: testina</span><span id="zoom-hint">15 secondi visibili</span></div>
       </section>
-      <section class="markers"><button class="btn btn-outline-info mark-btn" id="set-start" disabled><i class="bi bi-hand-index-thumb"></i> Inizio <small id="start-value">—</small></button>
+      <section class="markers"><button class="btn btn-info mark-btn" id="set-start" disabled><i class="bi bi-hand-index-thumb"></i> Inizio <small id="start-value">—</small></button>
         <div class="player-mode" id="player-mode" data-play-mode="normal"><button class="btn btn-primary btn-play" id="play" disabled title="Play/Pausa (spazio)"><i id="play-icon" class="bi bi-play-fill"></i></button>
           <div class="mode-options">
             <div class="mode-choice mode-choice-normal"><label><input type="radio" name="mode" value="normal" checked> Normale</label></div>
             <div class="mode-choice mode-choice-interval"><label><input type="radio" name="mode" value="interval"> Intervallo</label><label class="interval-size" for="interval">± <input type="number" class="form-control form-control-sm" id="interval" min="0.5" max="10" step="0.5" value="2.0"> s</label></div>
           </div>
-        </div><button class="btn btn-outline-warning mark-btn" id="set-end" disabled><i class="bi bi-hand-index-thumb-fill"></i> Fine <small id="end-value">—</small></button>
+        </div><button class="btn btn-warning mark-btn" id="set-end" disabled><i class="bi bi-hand-index-thumb-fill"></i> Fine <small id="end-value">—</small></button>
       </section>
       <div class="hint">Scorrimento: trascina la forma d'onda. <kbd>←</kbd>/<kbd>→</kbd> ±0,1 s · <kbd>Shift</kbd> ±1 s · <kbd>Spazio</kbd> Play/Pausa · <kbd>I</kbd> Inizio · <kbd>O</kbd> Fine.</div>
       <footer class="bottom"><span class="status" id="status" role="status">In attesa del file.</span>
@@ -629,9 +629,9 @@
         <h2 id="editor-intro-title">Video trimmer</h2>
         <div data-intro-language="it" hidden>
           <p>Scorri la clip avanti e indietro trascinando la forma d'onda col mouse e seleziona il punto  di inizio premendo 
-			<span class="btn btn-sm btn-outline-info intro-demo"><i class="bi bi-hand-index-thumb"></i> Inizio</span>
+			<span class="btn btn-sm btn-info intro-demo"><i class="bi bi-hand-index-thumb"></i> Inizio</span>
             e/o il punto di fine premendo
-            <span class="btn btn-sm btn-outline-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> Fine</span></p>
+            <span class="btn btn-sm btn-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> Fine</span></p>
 		  <p>Premi <i class="bi bi-play-circle"></i> e <i class="bi bi-pause-circle"></i> oppure
              <kbd>Spazio</kbd> per ascoltare e mettere in pausa.  La modalità <b>Intervallo</b>
              ripete una breve parte intorno al punto indicato dalla testina.</p>
@@ -643,9 +643,9 @@
         </div>
         <div data-intro-language="en">
           <p>Drag the waveform backward or forward with the mouse to navigate, then choose the starting point with
-            <span class="btn btn-sm btn-outline-info intro-demo"><i class="bi bi-hand-index-thumb"></i> Start</span>
+            <span class="btn btn-sm btn-info intro-demo"><i class="bi bi-hand-index-thumb"></i> Start</span>
             and/or the ending point with
-            <span class="btn btn-sm btn-outline-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> End</span></p>
+            <span class="btn btn-sm btn-warning intro-demo"><i class="bi bi-hand-index-thumb-fill"></i> End</span></p>
           <p>Press <i class="bi bi-play-circle"></i> and <i class="bi bi-pause-circle"></i> or <kbd>Space</kbd> to play or 
 			 pause. <b>Interval</b> mode repeats a short segment around the playhead.</p>
 		  <p>Zoom using the mouse wheel. Use the <kbd>&larr;</kbd> and <kbd>&rarr;</kbd> keys to precisely adjust
