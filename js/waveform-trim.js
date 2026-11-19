@@ -23,14 +23,30 @@ function ensureUI(){
   frame.style.cssText='display:block;width:100%;height:100%;border:0;';
   overlay.appendChild(frame);document.body.appendChild(overlay);
 }
-function open(){
-  if(!source||busy)return;
+async function open(){
+  if(!source||busy||active)return;
   ensureUI();active=true;ready=false;overlay.hidden=false;
-  frame.src='waveform-trim-test.html?embedded=1';
+  frame.dataset.waveformEmbedded='1';
+  try{
+    // srcdoc avoids server X-Frame-Options / frame-ancestors restrictions:
+    // the HTML is retrieved as a resource, not navigated to in a frame.
+    const response=await fetch('waveform-trim-test.html',{cache:'no-cache'});
+    if(!response.ok)throw Error('HTTP '+response.status);
+    const html=await response.text();
+    if(!active)return;
+    frame.srcdoc=html;
+  }catch(err){
+    console.error('Unable to open waveform editor:',err);
+    if(active){
+      overlay.hidden=true;active=false;
+      alert('Impossibile aprire l’editor: '+(err.message||err));
+    }
+  }
 }
 function close(){
   if(busy)return;
-  active=false;ready=false;overlay.hidden=true;frame.src='about:blank';trigger?.focus();
+  active=false;ready=false;overlay.hidden=true;
+  frame.removeAttribute('srcdoc');frame.src='about:blank';trigger?.focus();
 }
 async function detectKeyframe(ffmpeg,from,until){
   let span=8;

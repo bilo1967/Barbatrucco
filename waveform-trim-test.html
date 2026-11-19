@@ -458,12 +458,12 @@ $('play').addEventListener('click',playToggle);
 $('reset').addEventListener('click',()=>{start=null;end=null;refreshMarks();status('Selezione azzerata.');});
 $('confirm').addEventListener('click',()=>{
   const [a,b]=selection();
-  if (window.parent !== window && new URLSearchParams(location.search).has('embedded')) {
+  if (window.parent !== window && window.frameElement?.dataset.waveformEmbedded === '1') {
     if (!(b-a>.1)) {status('Intervallo troppo breve.');return;}
     if (a<=.001 && b>=duration-.001) {status('Seleziona una parte della registrazione.');return;}
     $('confirm').disabled=true;
     status('Preparazione del ritaglio…');
-    window.parent.postMessage({type:'bt-waveform-apply',start:a,end:b},location.origin);
+    window.parent.postMessage({type:'bt-waveform-apply',start:a,end:b},window.parent.location.origin);
   } else {
     status('Punti di taglio: '+format(a)+' — '+format(b)+' (durata '+format(b-a)+'). Nessun file modificato.');
   }
@@ -497,17 +497,17 @@ video.addEventListener('pause',updatePlayIcon);
 video.addEventListener('play',()=>{updatePlayIcon();tick();});
 video.addEventListener('ended',()=>{stopPlayback(false);});
 window.addEventListener('resize',resizeCanvas);
-const embedded=window.parent!==window && new URLSearchParams(location.search).has('embedded');
+const embedded=window.parent!==window && window.frameElement?.dataset.waveformEmbedded === '1';
 if(embedded){
   $('file-picker-label').hidden=true;
   $('embedded-close').hidden=false;
   $('confirm').innerHTML='<i class="bi bi-check-lg"></i> Applica taglio';
-  $('embedded-close').addEventListener('click',()=>window.parent.postMessage({type:'bt-waveform-close'},location.origin));
+  $('embedded-close').addEventListener('click',()=>window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin));
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();window.parent.postMessage({type:'bt-waveform-close'},location.origin);}
+    if(e.key==='Escape'){e.preventDefault();window.parent.postMessage({type:'bt-waveform-close'},window.parent.location.origin);}
   },true);
   window.addEventListener('message',e=>{
-    if(e.origin!==location.origin || e.source!==window.parent)return;
+    if(e.origin!==window.parent.location.origin || e.source!==window.parent)return;
     if(e.data?.type==='bt-waveform-source' && e.data.blob instanceof Blob){
       openFile(e.data.blob,e.data.filename);
     }else if(e.data?.type==='bt-waveform-status'){
@@ -515,7 +515,7 @@ if(embedded){
       if(e.data.error)$('confirm').disabled=false;
     }
   });
-  window.parent.postMessage({type:'bt-waveform-ready'},location.origin);
+  window.parent.postMessage({type:'bt-waveform-ready'},window.parent.location.origin);
 }
 resizeCanvas();refreshMarks();updateTheme();updatePlayMode();
 })();
