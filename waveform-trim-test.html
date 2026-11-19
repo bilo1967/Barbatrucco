@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="it" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Waveform trim editor — prototype</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0c1422;--panel:#152234;--line:#354861;--accent:#69baff;--muted:#a5b6cc;--dim:#080e17}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#e8eef7;font:14px/1.4 system-ui,sans-serif}
+.editor{min-height:100vh;display:flex;flex-direction:column;gap:12px;max-width:1320px;margin:auto;padding:14px 22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.top h1{font-size:17px;margin:0;white-space:nowrap}
+.top .file-controls{display:flex;gap:8px;align-items:center}
+.filename{max-width:36vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+button{cursor:pointer}
+.preview{height:clamp(160px,32vh,370px);background:#070d15;border:1px solid var(--line);border-radius:9px;position:relative;overflow:hidden;display:grid;place-items:center}
+.preview video{height:100%;width:100%;object-fit:contain}
+.preview .placeholder{color:#74869d;text-align:center;display:none}
+.preview.no-video video{display:none}
+.preview.no-video .placeholder{display:block}
+.drag-clock{display:none;position:absolute;inset:0;z-index:6;background:rgba(7,13,22,.92);place-items:center;font-size:clamp(24px,5vw,48px);font-variant-numeric:tabular-nums;letter-spacing:.025em}
+.preview.dragging .drag-clock{display:grid}
+.preview-shade{position:absolute;inset:0;background:#080e17;opacity:0;pointer-events:none;transition:opacity .09s}
+.time-line{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;gap:8px}
+.time-line strong{font-size:23px;color:#f0f5fb;font-weight:600;font-variant-numeric:tabular-nums}
+.wave-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 8px}
+.wave-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:5px;color:var(--muted)}
+.wave-head .right{display:flex;gap:10px;align-items:center}
+.wave-head select{width:auto;min-width:92px}
+.wave-box{position:relative;height:178px;touch-action:pan-y;cursor:grab;user-select:none;outline:none}
+.wave-box.dragging{cursor:grabbing}
+.wave-box canvas{display:block;width:100%;height:100%;border-radius:5px}
+.center-marker{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:50%;transform:translateX(-50%);pointer-events:none;box-shadow:0 0 4px #ffffff66}
+.center-marker::before{content:"";position:absolute;left:-5px;top:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #fff}
+.ticks{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:3px}
+.markers{display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr);align-items:center;gap:10px;margin-top:12px}
+.mark-btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px}
+.mark-btn small{color:var(--muted);font-variant-numeric:tabular-nums}
+.mark-btn:first-child{justify-self:start}
+.mark-btn:last-child{justify-self:end}
+.player-mode{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.player-mode label{white-space:nowrap}
+.player-mode .btn-play{width:48px;height:48px;font-size:21px;border-radius:50%;padding:0}
+.interval-size{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.interval-size input{width:62px;text-align:center;padding:4px;font-variant-numeric:tabular-nums}
+.mode-options{display:flex;align-items:center;gap:11px}
+.mode-options input{accent-color:var(--accent)}
+.bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}
+.bottom .actions{display:flex;gap:7px}
+.status{font-size:12px;color:var(--muted);min-height:18px}
+.hint{font-size:11px;color:#91a7c0}
+kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;color:#fff}
+@media(max-width:680px){.editor{padding:10px;gap:9px}.preview{height:24vh;min-height:130px}.wave-box{height:135px}.markers{grid-template-columns:1fr;justify-items:center}.mark-btn:first-child,.mark-btn:last-child{justify-self:center}.wave-head{flex-wrap:wrap}.top h1{font-size:14px}}
+</style>
+</head>
+<body>
+<main class="editor">
+  <header class="top">
+    <h1><i class="bi bi-scissors"></i> Editor di ritaglio · prototipo</h1>
+    <div class="file-controls"><span id="filename" class="filename">Nessun file</span>
+      <label class="btn btn-sm btn-outline-info mb-0" for="file"><i class="bi bi-folder2-open"></i> Apri WebM</label>
+      <input id="file" type="file" accept=".webm,video/webm,audio/webm" hidden>
+    </div>
+  </header>
+  <section id="preview" class="preview no-video" aria-label="Anteprima">
+    <video id="video" playsinline preload="auto"></video>
+    <div class="placeholder" id="placeholder"><i class="bi bi-film fs-1"></i><div>Carica un WebM per iniziare</div></div>
+    <div id="shade" class="preview-shade"></div>
+    <div class="drag-clock" id="drag-clock">00:00:00.0</div>
+  </section>
+  <section class="time-line">
+    <span>Posizione</span><strong id="clock">00:00:00.0</strong><span id="total">Totale 00:00:00.0</span>
+  </section>
+  <section class="wave-section">
+    <div class="wave-head">
+      <span>Forma d'onda — trascina per scorrere, rilascia per aggiornare il video</span>
+      <div class="right">
+        <span id="selection-length">Selezione completa</span>
+        <label for="zoom">Zoom</label>
+        <select class="form-select form-select-sm" id="zoom">
+          <option value="30">30 s</option><option selected value="15">15 s</option>
+          <option value="6">6 s</option><option value="3">3 s</option>
+        </select>
+      </div>
+    </div>
+    <div id="wave-box" class="wave-box" tabindex="0" role="slider"
+      aria-label="Posizione nella registrazione; usa frecce sinistra e destra per spostarti di 0,1 secondi"
+      aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+      <canvas id="wave"></canvas><div class="center-marker"></div>
+    </div>
+    <div class="ticks"><span id="left-tick">00:00:00</span><span id="right-tick">00:00:15</span></div>
+  </section>
+  <section class="markers">
+    <button class="btn btn-outline-success mark-btn" id="set-start" disabled><i class="bi bi-flag"></i> Inizio <small id="start-value">—</small></button>
+    <div class="player-mode">
+      <button class="btn btn-primary btn-play" id="play" disabled title="Play/Pausa (spazio)"><i id="play-icon" class="bi bi-play-fill"></i></button>
+      <div class="mode-options">
+        <label><input type="radio" name="mode" value="normal" checked> Normale</label>
+        <label><input type="radio" name="mode" value="interval"> Intervallo</label>
+      </div>
+      <label class="interval-size">± <input type="number" class="form-control form-control-sm" id="interval" min="0.5" max="10" step="0.5" value="2.0"> s</label>
+    </div>
+    <button class="btn btn-outline-warning mark-btn" id="set-end" disabled><i class="bi bi-flag-fill"></i> Fine <small id="end-value">—</small></button>
+  </section>
+  <div class="hint">Scorrimento: trascina la forma d'onda. <kbd>←</kbd>/<kbd>→</kbd> ±0,1 s · <kbd>Shift</kbd> ±1 s · <kbd>Spazio</kbd> Play/Pausa · <kbd>I</kbd> Inizio · <kbd>O</kbd> Fine.</div>
+  <footer class="bottom">
+    <span class="status" id="status" role="status">In attesa del file.</span>
+    <div class="actions">
+      <button class="btn btn-sm btn-outline-secondary" id="reset" disabled>Ripristina</button>
+      <button class="btn btn-sm btn-success" id="confirm" disabled><i class="bi bi-check-lg"></i> Conferma punti</button>
+    </div>
+  </footer>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const video = $('video'), preview = $('preview'), clock = $('clock'), dragClock = $('drag-clock');
+const canvas = $('wave'), ctx = canvas.getContext('2d'), viewport = $('wave-box');
+const mode = () => document.querySelector('input[name=mode]:checked').value;
+let fileUrl = null, sourceFile = null, duration = 0, position = 0;
+let start = null, end = null, peaks = null, drag = null, zoom = 15;
+let playback = null, raf = 0, audioContext = null, loadToken = 0;
+const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+const roundTenth = t => Math.round(t*10)/10;
+const format = (t, decimals=true) => {
+  t = Math.max(0,Number(t)||0);
+  const h = Math.floor(t/3600), m = Math.floor(t/60)%60, s = t%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+
+    (decimals ? s.toFixed(1).padStart(4,'0') : String(Math.floor(s)).padStart(2,'0'));
+};
+const status = s => $('status').textContent = s;
+function selection() { return [start ?? 0, end ?? duration]; }
+function setPosition(t,seek=true) {
+  position = roundTenth(clamp(t,0,duration));
+  clock.textContent = format(position); dragClock.textContent = format(position);
+  viewport.setAttribute('aria-valuenow',String(position));
+  viewport.setAttribute('aria-valuemax',String(Math.round(duration*10)/10));
+  $('left-tick').textContent = format(Math.max(0,position-zoom/2),false);
+  $('right-tick').textContent = format(Math.min(duration,position+zoom/2),false);
+  if (seek && Number.isFinite(video.duration)) {
+    video.pause(); video.currentTime = position;
+    playback = null; updatePlayIcon(); restoreAudio();
+  }
+  draw();
+}
+function refreshMarks() {
+  $('start-value').textContent = start===null ? '—' : format(start);
+  $('end-value').textContent = end===null ? '—' : format(end);
+  const [a,b]=selection();
+  $('selection-length').textContent = start===null && end===null ?
+    'Selezione completa' : 'Durata '+format(Math.max(0,b-a));
+  draw();
+}
+function mark(which) {
+  if (!sourceFile) return;
+  const time = roundTenth(video.paused ? position : video.currentTime);
+  if (which==='start') {
+    if (end !== null && time >= end) {status('Inizio deve precedere Fine.');return;}
+    start = time;
+  } else {
+    if (start !== null && time <= start) {status('Fine deve seguire Inizio.');return;}
+    end = time;
+  }
+  refreshMarks(); status((which==='start'?'Inizio':'Fine')+' impostato a '+format(time));
+}
+function restoreAudio(){video.volume=1; $('shade').style.opacity=0;}
+function updatePlayIcon(){ $('play-icon').className = 'bi bi-'+(video.paused?'play-fill':'pause-fill');}
+function stopPlayback(returnToOrigin=false) {
+  if (playback && returnToOrigin && playback.type==='interval') {
+    const origin = playback.origin;
+    playback=null; video.pause(); video.currentTime=origin; setPosition(origin,false);
+  } else { playback=null;video.pause(); }
+  restoreAudio();updatePlayIcon();
+}
+async function playToggle() {
+  if (!sourceFile || drag) return;
+  if (!video.paused) {stopPlayback(true);return;}
+  const chosen = mode();
+  if (chosen==='normal') {
+    playback={type:'normal'};
+    video.currentTime = Math.min(duration,position);
+  } else {
+    const radius=clamp(Number($('interval').value)||2,.5,10);
+    $('interval').value=radius.toFixed(1);
+    playback={type:'interval',origin:position,stop:Math.min(duration,position+radius)};
+    video.currentTime=Math.max(0,position-radius);
+  }
+  try { await video.play();updatePlayIcon();tick(); }
+  catch(e){status('Riproduzione non disponibile: '+e.message);stopPlayback(false);}
+}
+function tick() {
+  cancelAnimationFrame(raf);
+  const step=() => {
+    if (video.paused) {updatePlayIcon();return;}
+    const t=video.currentTime;
+    if (playback && playback.type==='interval' && t>=playback.stop-.025) {
+      stopPlayback(true);return;
+    }
+    position=t;
+    clock.textContent=format(t);
+    if (playback && playback.type==='interval') {
+      const [a,b]=selection();
+      const inside=t>=a && t<=b;
+      const target=inside?1:.17;
+      video.volume+=clamp(target-video.volume,-.09,.09);
+      $('shade').style.opacity=inside?'0':'.68';
+    } else restoreAudio();
+    draw(); raf=requestAnimationFrame(step);
+  };
+  raf=requestAnimationFrame(step);
+}
+function resizeCanvas(){
+  const dpr=Math.min(2,window.devicePixelRatio||1),rect=viewport.getBoundingClientRect();
+  canvas.width=Math.max(1,Math.round(rect.width*dpr));canvas.height=Math.max(1,Math.round(rect.height*dpr));
+  draw();
+}
+function draw(){
+  if(!ctx || !canvas.width)return;
+  const w=canvas.width,h=canvas.height, dpr=w/Math.max(1,viewport.clientWidth);
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#101b2a';ctx.fillRect(0,0,w,h);
+  const pxPerSecond=w/zoom, center=w/2, mid=h/2, barWidth=3.2*dpr, step=5*dpr;
+  const [a,b]=selection();
+  for(let x=0;x<w;x+=step){
+    const t=position+(x-center)/pxPerSecond;
+    if(t<0||t>duration)continue;
+    const idx=Math.floor(t*10);
+    const amp=peaks ? Math.max(peaks[clamp(idx,0,peaks.length-1)]||0,.025):.035;
+    const barHeight=clamp(Math.pow(amp,.66)*h*.82,3*dpr,h*.91);
+    ctx.fillStyle=t<a||t>b?'#486077':'#69baff';
+    ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(x,mid-barHeight/2,barWidth,barHeight,barWidth/2);
+    else ctx.rect(x,mid-barHeight/2,barWidth,barHeight);
+    ctx.fill();
+  }
+  for(const [from,to] of [[0,a],[b,duration]]){
+    const left=clamp(center+(from-position)*pxPerSecond,0,w);
+    const right=clamp(center+(to-position)*pxPerSecond,0,w);
+    if(right>left){ctx.fillStyle='#04091491';ctx.fillRect(left,0,right-left,h);}
+  }
+  for(const [t,color] of [[start,'#55d9a0'],[end,'#ffbd74']]){
+    if(t===null)continue;
+    const x=center+(t-position)*pxPerSecond;
+    if(x<0||x>w)continue;
+    ctx.fillStyle=color;ctx.fillRect(x-1*dpr,0,2*dpr,h);
+    ctx.beginPath();ctx.moveTo(x-5*dpr,0);ctx.lineTo(x+5*dpr,0);ctx.lineTo(x,8*dpr);ctx.fill();
+  }
+  ctx.fillStyle='#ffffff17'; ctx.fillRect(center-1*dpr,0,2*dpr,h);
+}
+function beginDrag(e){
+  if(!sourceFile || e.button!==0)return;
+  stopPlayback(false);
+  drag={id:e.pointerId,x:e.clientX,origin:position,moved:false};
+  viewport.setPointerCapture(e.pointerId);viewport.classList.add('dragging');
+  preview.classList.add('dragging');e.preventDefault();
+}
+function dragMove(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  const delta=e.clientX-drag.x;
+  if(Math.abs(delta)>1)drag.moved=true;
+  const seconds=delta/Math.max(1,viewport.clientWidth)*zoom;
+  setPosition(drag.origin-seconds,false);
+}
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  dragMove(e);drag=null;
+  viewport.classList.remove('dragging');preview.classList.remove('dragging');
+  if(Number.isFinite(video.duration)){video.pause();video.currentTime=position;}
+}
+async function makePeaks(file,token){
+  peaks=null;draw();status('Analisi della forma d’onda in corso…');
+  // A standalone UX prototype: full WebAudio decode. Large recordings may need
+  // chunked extraction in the integrated implementation.
+  const array=await file.arrayBuffer();
+  const ac=new (window.AudioContext||window.webkitAudioContext)();
+  audioContext=ac;
+  try {
+    const decoded=await ac.decodeAudioData(array);
+    if(token!==loadToken)return;
+    const count=Math.max(1,Math.ceil(decoded.duration*10));
+    const result=new Float32Array(count), ch=[];
+    for(let c=0;c<decoded.numberOfChannels;c++)ch.push(decoded.getChannelData(c));
+    const per=Math.max(1,Math.floor(decoded.sampleRate/10));
+    for(let k=0;k<count;k++){
+      const lo=k*per,hi=Math.min(decoded.length,lo+per);
+      let sum=0,n=0;
+      for(let i=lo;i<hi;i+=12){
+        let v=0;
+        for(let c=0;c<ch.length;c++)v+=ch[c][i]*ch[c][i];
+        sum+=v/ch.length;n++;
+      }
+      result[k]=n?Math.sqrt(sum/n):0;
+    }
+    peaks=result;draw();status('Forma d’onda pronta.');
+  } finally {
+    if(audioContext===ac)audioContext=null;
+    await ac.close().catch(()=>{});
+  }
+}
+async function openFile(file) {
+  if(!file)return;
+  const token=++loadToken;stopPlayback(false);sourceFile=file;
+  if(fileUrl)URL.revokeObjectURL(fileUrl);
+  fileUrl=URL.createObjectURL(file);video.src=fileUrl;video.load();
+  $('filename').textContent=file.name;
+  start=null;end=null;position=0;peaks=null;
+  $('reset').disabled=false;$('confirm').disabled=false;
+  $('play').disabled=false;$('set-start').disabled=false;$('set-end').disabled=false;
+  const hasVideo=file.type.startsWith('video/')||(/\.webm$/i.test(file.name));
+  preview.classList.toggle('no-video',!hasVideo);
+  status('Apertura file…');
+  try {
+    if(video.readyState<1)await new Promise((resolve,reject)=>{
+      video.addEventListener('loadedmetadata',resolve,{once:true});
+      video.addEventListener('error',()=>reject(new Error('File non leggibile dal player')),{once:true});
+    });
+    if(token!==loadToken)return;
+    duration=Number.isFinite(video.duration)?video.duration:0;
+    if(!(duration>0))throw new Error('Durata non disponibile. Verificare il file WebM.');
+    preview.classList.toggle('no-video',!video.videoWidth);
+    $('total').textContent='Totale '+format(duration);
+    setPosition(0,true);refreshMarks();
+    try {await makePeaks(file,token);}
+    catch(e){if(token===loadToken)status('Audio non decodificabile per la forma d’onda: '+e.message);}
+  } catch(e){if(token===loadToken)status('Errore: '+e.message);}
+}
+$('file').addEventListener('change',e=>openFile(e.target.files[0]));
+$('zoom').addEventListener('change',e=>{zoom=Number(e.target.value)||15;setPosition(position,false);});
+$('set-start').addEventListener('click',()=>mark('start'));
+$('set-end').addEventListener('click',()=>mark('end'));
+$('play').addEventListener('click',playToggle);
+$('reset').addEventListener('click',()=>{start=null;end=null;refreshMarks();status('Selezione azzerata.');});
+$('confirm').addEventListener('click',()=>{
+  const [a,b]=selection();
+  status('Punti di taglio: '+format(a)+' — '+format(b)+' (durata '+format(b-a)+'). Nessun file modificato.');
+});
+viewport.addEventListener('pointerdown',beginDrag);
+viewport.addEventListener('pointermove',dragMove);
+viewport.addEventListener('pointerup',endDrag);
+viewport.addEventListener('pointercancel',endDrag);
+viewport.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+    e.preventDefault();stopPlayback(false);
+    setPosition(position+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?1:.1),true);
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,select,textarea,button')||e.altKey||e.ctrlKey||e.metaKey)return;
+  const k=e.key.toLowerCase();
+  if(e.code==='Space'){e.preventDefault();playToggle();}
+  else if(k==='i'){e.preventDefault();mark('start');}
+  else if(k==='o'){e.preventDefault();mark('end');}
+  else if(k==='arrowleft'||k==='arrowright'){
+    e.preventDefault();stopPlayback(false);
+    setPosition(position+(k==='arrowright'?1:-1)*(e.shiftKey?1:.1),true);
+  }
+});
+video.addEventListener('pause',updatePlayIcon);
+video.addEventListener('play',()=>{updatePlayIcon();tick();});
+video.addEventListener('ended',()=>{stopPlayback(false);});
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();refreshMarks();
+})();
+</script>
+</body>
+</html>
