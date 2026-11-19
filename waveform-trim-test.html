@@ -47,14 +47,22 @@ button{cursor:pointer}
 .player-mode .btn-play{width:48px;height:48px;font-size:21px;border-radius:50%;padding:0}
 .interval-size{display:flex;align-items:center;gap:5px;color:var(--muted)}
 .interval-size input{width:62px;text-align:center;padding:4px;font-variant-numeric:tabular-nums}
-.mode-options{display:flex;align-items:center;gap:11px;padding:7px 10px;border-radius:8px;border:1px solid transparent;transition:background .15s,border-color .15s}
-.player-mode[data-play-mode="normal"] .mode-options{background:var(--play-normal-tint);border-color:var(--play-normal-tint)}
-.player-mode[data-play-mode="interval"] .mode-options{background:var(--play-interval-tint);border-color:var(--play-interval-tint)}
+.mode-options{display:flex;align-items:stretch;gap:7px}
+.mode-choice{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+.mode-choice label{display:flex;align-items:center;gap:5px;cursor:pointer;margin:0}
+.mode-choice-normal{background:var(--play-normal-tint)}
+.mode-choice-interval{background:var(--play-interval-tint)}
+.player-mode[data-play-mode="normal"] .mode-choice-normal{border-color:var(--play-normal);box-shadow:inset 0 0 0 1px var(--play-normal)}
+.player-mode[data-play-mode="interval"] .mode-choice-interval{border-color:var(--play-interval);box-shadow:inset 0 0 0 1px var(--play-interval)}
+.mode-choice-normal input[type=radio]{accent-color:var(--play-normal)}
+.mode-choice-interval input[type=radio]{accent-color:var(--play-interval)}
+.mode-choice-interval .interval-size{border-left:1px solid var(--line);padding-left:9px;margin-left:2px}
+@media(max-width:680px){.mode-options{flex-wrap:wrap;justify-content:center}}
 .player-mode .btn-play{background:var(--play-normal)!important;border-color:var(--play-normal)!important;color:#fff}
 .player-mode[data-play-mode="interval"] .btn-play{background:var(--play-interval)!important;border-color:var(--play-interval)!important}
 html[data-bs-theme="light"] #set-end{color:#70400b;border-color:#ae6d1e;font-weight:600}
 html[data-bs-theme="light"] #set-end:hover{color:#fff;background:#956010;border-color:#956010}
-.mode-options input{accent-color:var(--accent)}
+
 .bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}
 .bottom .actions{display:flex;gap:7px}
 .status{font-size:12px;color:var(--muted);min-height:18px}
@@ -108,10 +116,14 @@ kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;col
     <div class="player-mode" id="player-mode" data-play-mode="normal">
       <button class="btn btn-primary btn-play" id="play" disabled title="Play/Pausa (spazio)"><i id="play-icon" class="bi bi-play-fill"></i></button>
       <div class="mode-options">
-        <label><input type="radio" name="mode" value="normal" checked> Normale</label>
-        <label><input type="radio" name="mode" value="interval"> Intervallo</label>
+        <div class="mode-choice mode-choice-normal">
+          <label><input type="radio" name="mode" value="normal" checked> Normale</label>
+        </div>
+        <div class="mode-choice mode-choice-interval">
+          <label><input type="radio" name="mode" value="interval"> Intervallo</label>
+          <label class="interval-size" for="interval">± <input type="number" class="form-control form-control-sm" id="interval" min="0.5" max="10" step="0.5" value="2.0"> s</label>
+        </div>
       </div>
-      <label class="interval-size">± <input type="number" class="form-control form-control-sm" id="interval" min="0.5" max="10" step="0.5" value="2.0"> s</label>
     </div>
     <button class="btn btn-outline-warning mark-btn" id="set-end" disabled><i class="bi bi-flag-fill"></i> Fine <small id="end-value">—</small></button>
   </section>
@@ -426,16 +438,10 @@ viewport.addEventListener('pointerdown',beginDrag);
 viewport.addEventListener('pointermove',dragMove);
 viewport.addEventListener('pointerup',endDrag);
 viewport.addEventListener('pointercancel',endDrag);
-viewport.addEventListener('keydown',e=>{
-  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
-    e.preventDefault();stopPlayback(false);
-    setPosition(position+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?1:.1),true);
-  }
-});
 document.addEventListener('keydown',e=>{
   if(e.altKey||e.ctrlKey||e.metaKey)return;
   const editable = e.target.isContentEditable ||
-    e.target.matches?.('input,select,textarea,[contenteditable="true"]');
+    e.target.matches?.('input,textarea,[contenteditable="true"]');
   // Space always toggles playback, even with a button, select or number field focused.
   // Text editing remains possible with all other keys.
   if(e.code==='Space' && !e.target.isContentEditable){
@@ -448,7 +454,8 @@ document.addEventListener('keydown',e=>{
   if(k==='i'){e.preventDefault();mark('start');}
   else if(k==='o'){e.preventDefault();mark('end');}
   else if(k==='arrowleft'||k==='arrowright'){
-    e.preventDefault();stopPlayback(false);
+    // Capture phase: zoom dropdown, buttons and waveform cannot consume arrows.
+    e.preventDefault();e.stopPropagation();stopPlayback(false);
     setPosition(position+(k==='arrowright'?1:-1)*(e.shiftKey?1:.1),true);
   }
 },true);
