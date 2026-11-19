@@ -336,7 +336,7 @@ function draw(){
     if(next<=t || t>duration)continue;
     const x=center+(t+barSeconds*.5-position)*pxPerSecond;
     if(x < -barWidth || x>w+barWidth)continue;
-    let amp=.035;
+    let amp=peaks ? 0 : .035;
     if(peaks){
       const i0=clamp(Math.floor(t*10),0,peaks.length);
       const i1=clamp(Math.ceil(next*10),i0+1,peaks.length);
@@ -346,7 +346,8 @@ function draw(){
       }
       if(count)amp=Math.sqrt(sum/count)*.75+maximum*.25;
     }
-    const barHeight=clamp(Math.pow(Math.min(1,amp*waveGain),.60)*h*.91,2*dpr,h*.94);
+    // Linear display scale; 95th-percentile amplitude fills 80% of the canvas.
+    const barHeight=clamp(amp*waveGain*h*.80,2*dpr,h*.80);
     ctx.fillStyle=t<a||t>=b?palette('--wave-muted'):palette('--accent');
     ctx.beginPath();
     const bx=x-barWidth*.5;
@@ -414,9 +415,11 @@ async function makePeaks(file,token){
     }
     peaks=result;
     const nonZero=Array.from(result).filter(v=>v>0).sort((a,b)=>a-b);
-    // Display-only gain, fixed for the whole recording.
-    const reference=nonZero.length ? nonZero[Math.floor(nonZero.length*.80)] : 0;
-    waveGain=reference>0?Math.min(40,.85/reference):1;
+    // A robust global reference: the 95th percentile of RMS bins.
+    // A rare loud peak cannot flatten the rest of the waveform.
+    // This display-only gain stays fixed across every zoom and scroll.
+    const reference=nonZero.length ? nonZero[Math.floor((nonZero.length-1)*.95)] : 0;
+    waveGain=reference>0?1/reference:1;
     draw();status('Forma d’onda pronta.');
   } finally {
     if(audioContext===ac)audioContext=null;
