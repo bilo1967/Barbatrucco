@@ -69,6 +69,7 @@ html[data-bs-theme="light"] #set-end:hover{color:#fff;background:#956010;border-
 .hint{font-size:11px;color:var(--muted);text-align:center}
 kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;color:#fff}
 @media(max-width:680px){.editor{padding:10px;gap:9px}.preview{height:115px;max-width:215px}.wave-box{height:175px}.markers{grid-template-columns:1fr;justify-items:center}.mark-btn:first-child,.mark-btn:last-child{justify-self:center}.wave-head{flex-wrap:wrap}.top h1{font-size:14px}}
+#embedded-close[hidden],#file-picker-label[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -77,7 +78,8 @@ kbd{font-family:inherit;background:#30445d;padding:1px 4px;border-radius:3px;col
     <h1><i class="bi bi-scissors"></i> Editor di ritaglio · prototipo</h1>
     <div class="file-controls"><span id="filename" class="filename">Nessun file</span>
       <button id="theme-toggle" class="btn btn-sm btn-outline-secondary" type="button" title="Alterna tema chiaro/scuro" aria-label="Alterna tema chiaro/scuro"><i class="bi bi-sun"></i></button>
-      <label class="btn btn-sm btn-outline-info mb-0" for="file"><i class="bi bi-folder2-open"></i> Apri WebM</label>
+      <button id="embedded-close" class="btn btn-sm btn-outline-secondary" type="button" hidden aria-label="Chiudi editor" title="Chiudi"><i class="bi bi-x-lg"></i></button>
+      <label id="file-picker-label" class="btn btn-sm btn-outline-info mb-0" for="file"><i class="bi bi-folder2-open"></i> Apri WebM</label>
       <input id="file" type="file" accept=".webm,video/webm,audio/webm" hidden>
     </div>
   </header>
@@ -390,12 +392,12 @@ async function makePeaks(file,token){
     await ac.close().catch(()=>{});
   }
 }
-async function openFile(file) {
+async function openFile(file, displayName) {
   if(!file)return;
   const token=++loadToken;stopPlayback(false);sourceFile=file;
   if(fileUrl)URL.revokeObjectURL(fileUrl);
   fileUrl=URL.createObjectURL(file);video.src=fileUrl;video.load();
-  $('filename').textContent=file.name;
+  $('filename').textContent=displayName || file.name || 'Registrazione WebM';
   start=null;end=null;position=0;peaks=null;
   $('reset').disabled=false;$('confirm').disabled=false;
   $('play').disabled=false;$('set-start').disabled=false;$('set-end').disabled=false;
@@ -456,7 +458,15 @@ $('play').addEventListener('click',playToggle);
 $('reset').addEventListener('click',()=>{start=null;end=null;refreshMarks();status('Selezione azzerata.');});
 $('confirm').addEventListener('click',()=>{
   const [a,b]=selection();
-  status('Punti di taglio: '+format(a)+' — '+format(b)+' (durata '+format(b-a)+'). Nessun file modificato.');
+  if (window.parent !== window && new URLSearchParams(location.search).has('embedded')) {
+    if (!(b-a>.1)) {status('Intervallo troppo breve.');return;}
+    if (a<=.001 && b>=duration-.001) {status('Seleziona una parte della registrazione.');return;}
+    $('confirm').disabled=true;
+    status('Preparazione del ritaglio…');
+    window.parent.postMessage({type:'bt-waveform-apply',start:a,end:b},location.origin);
+  } else {
+    status('Punti di taglio: '+format(a)+' — '+format(b)+' (durata '+format(b-a)+'). Nessun file modificato.');
+  }
 });
 viewport.addEventListener('pointerdown',beginDrag);
 viewport.addEventListener('pointermove',dragMove);
@@ -487,6 +497,26 @@ video.addEventListener('pause',updatePlayIcon);
 video.addEventListener('play',()=>{updatePlayIcon();tick();});
 video.addEventListener('ended',()=>{stopPlayback(false);});
 window.addEventListener('resize',resizeCanvas);
+const embedded=window.parent!==window && new URLSearchParams(location.search).has('embedded');
+if(embedded){
+  $('file-picker-label').hidden=true;
+  $('embedded-close').hidden=false;
+  $('confirm').innerHTML='<i class="bi bi-check-lg"></i> Applica taglio';
+  $('embedded-close').addEventListener('click',()=>window.parent.postMessage({type:'bt-waveform-close'},location.origin));
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();window.parent.postMessage({type:'bt-waveform-close'},location.origin);}
+  },true);
+  window.addEventListener('message',e=>{
+    if(e.origin!==location.origin || e.source!==window.parent)return;
+    if(e.data?.type==='bt-waveform-source' && e.data.blob instanceof Blob){
+      openFile(e.data.blob,e.data.filename);
+    }else if(e.data?.type==='bt-waveform-status'){
+      status(e.data.message||'');
+      if(e.data.error)$('confirm').disabled=false;
+    }
+  });
+  window.parent.postMessage({type:'bt-waveform-ready'},location.origin);
+}
 resizeCanvas();refreshMarks();updateTheme();updatePlayMode();
 })();
 </script>

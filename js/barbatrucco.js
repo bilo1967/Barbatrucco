@@ -80,6 +80,7 @@ function setDownload(selector, blob, filename) {
     const url = URL.createObjectURL(blob);
     downloadURLs[selector] = url;
     $(selector).attr('href', url).attr('download', filename).removeClass('disabled');
+    if (selector === '#rec-download') window.BTWaveformTrim?.onRecording(blob, filename);
     if (selector === '#rec-download') {
         // Il player deve abbandonare la precedente sorgente prima di revocarne l'URL.
         mangiacassette.pause();
@@ -123,6 +124,8 @@ function runConversion(work) {
     conversionQueue = next.catch(() => {});
     return next;
 }
+window.btRunConversion = runConversion;
+window.btApplyWaveformTrimResult = (blob, filename) => setDownload('#rec-download', blob, filename);
 
 async function convertMediaBlob(original, input, format) {
     if (!ffmpegLoaded || !window.ffmpeg || !window.fetchFile) {
